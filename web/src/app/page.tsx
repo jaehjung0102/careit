@@ -1,69 +1,10 @@
-import Image from "next/image";
-
+import Link from "next/link";
+import { PageHeader, SectionTitle, StatusBadge } from "@/components/ui";
+import { residents, changes, handovers } from "@/lib/mock/dashboard";
 export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+  return <div className="space-y-8"><PageHeader eyebrow="오늘의 돌봄" title="안녕하세요, 재헌님" description="어르신의 하루를 기록하고, 필요한 변화를 팀과 함께 확인하세요." />
+    <div className="grid gap-4 sm:grid-cols-3"><div className="stat-card"><span>담당 어르신</span><strong>{residents.length}<small>명</small></strong><p>오늘 살펴볼 어르신</p></div><div className="stat-card"><span>오늘 기록</span><strong>2<small>건</small></strong><p>입력 및 초안 확인</p></div><div className="stat-card"><span>확인할 인계</span><strong>{handovers.filter(x => x.status !== "완료").length}<small>건</small></strong><p>수신 확인이 필요해요</p></div></div>
+    <section className="panel overflow-hidden"><div className="panel-heading"><SectionTitle title="담당 어르신" subtitle="어르신을 선택해 기록을 시작하세요." /><Link className="text-link" href="/recordings">기록 보기 →</Link></div><div className="divide-y divide-slate-100">{residents.map(x => <div className="flex flex-wrap items-center gap-4 px-5 py-4 sm:px-6" key={x.id}><span className="avatar">{x.name.slice(0,1)}</span><div className="min-w-0 flex-1"><p className="font-semibold text-slate-900">{x.name} 어르신</p><p className="mt-1 text-sm text-slate-500">{x.room}</p></div><StatusBadge tone={x.tone}>{x.status}</StatusBadge><Link href={`/recordings?resident=${x.id}`} className="button-outline">기록하기</Link></div>)}</div></section>
+    <div className="grid gap-6 lg:grid-cols-2"><section className="panel"><div className="panel-heading"><SectionTitle title="최근 변화" subtitle="기록의 근거를 함께 확인하세요." /><Link className="text-link" href="/changes">전체 보기 →</Link></div><div className="space-y-4 px-5 pb-5 sm:px-6 sm:pb-6">{changes.map(x => <div className="rounded-xl bg-slate-50 p-4" key={x.id}><strong className="text-sm text-slate-900">{x.resident} 어르신 · {x.category}</strong><p className="mt-2 text-sm leading-6 text-slate-600">{x.summary}</p></div>)}</div></section><section className="panel"><div className="panel-heading"><SectionTitle title="인계 현황" subtitle="전달부터 조치까지 놓치지 않도록." /><Link className="text-link" href="/handovers">전체 보기 →</Link></div><div className="space-y-4 px-5 pb-5 sm:px-6 sm:pb-6">{handovers.slice(0,2).map(x => <div className="rounded-xl border border-slate-100 p-4" key={x.id}><div className="flex items-center justify-between gap-3"><strong className="text-sm text-slate-900">{x.title}</strong><StatusBadge tone={x.tone}>{x.status}</StatusBadge></div><p className="mt-2 text-sm text-slate-500">{x.resident} 어르신 · {x.assignee}</p></div>)}</div></section></div>
+  </div>;
 }
