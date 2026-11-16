@@ -1,8 +1,8 @@
 # 개발 워크플로우
 
-1. [Issue 할당표](issue-assignments.md)에서 `[F1-03] / #3`처럼 계획 코드와 실제 GitHub Issue 번호를 함께 확인한다.
+1. [Issue 할당표](issue-assignments.md)에서 `[F1-03] / #3`처럼 계획 코드와 실제 GitHub Issue 번호를 함께 확인한다. [개발 보드](https://github.com/users/jaehjung0102/projects/1)의 담당 카드를 작업 시작 시 `In Progress`로 옮긴다.
 2. 최신 `main`을 Pull하고 담당 경로에서 작업 브랜치를 만든다.
 3. 구현 후 로컬에서 lint·build와 해당 화면/API의 정상·실패 흐름을 확인한다.
 4. PR 본문에 Issue 링크, 변경 사항, mock/실제 데이터 여부, 검증 결과, 리뷰 요청을 적는다. 자세한 예시는 [개발 계획](development-plan.md#pr-본문-작성-규칙)을 따른다.
 5. 수요일·일요일 마감까지 **프론트엔드↔백엔드 교차 리뷰와 수정·승인**을 마친다. F1↔B1, F2↔B2가 지정된 리뷰 짝이다.
-6. 정재헌이 승인된 PR을 `main`에 최종 merge하고 실행을 확인한 뒤 Issue를 닫는다.
+6. 정재헌이 승인된 PR을 `main`에 최종 merge하고 실행을 확인한 뒤 Issue를 닫고 보드 카드를 `Done`으로 표시한다.
