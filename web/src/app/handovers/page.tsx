@@ -1,3 +1,14 @@
-import { PageHeader, SectionTitle, StatusBadge } from "@/components/ui";
-import { handovers } from "@/lib/mock/dashboard";
-export default function HandoversPage() { return <div className="space-y-7"><PageHeader eyebrow="인수인계" title="담당자 인계" description="전달한 내용을 수신하고 조치할 때까지 상태를 확인합니다." /><section className="panel"><div className="panel-heading"><SectionTitle title="인계 목록" subtitle="담당자·기한·진행 상태를 확인하세요." /></div><div className="divide-y divide-slate-100">{handovers.map(x => <article className="px-5 py-5 sm:px-6" key={x.id}><div className="flex items-center justify-between gap-3"><strong className="text-sm text-slate-900">{x.title}</strong><StatusBadge tone={x.tone}>{x.status}</StatusBadge></div><p className="mt-2 text-sm text-slate-600">{x.resident} 어르신</p><p className="mt-3 text-xs text-slate-500">담당 {x.assignee} · 기한 {x.due}</p></article>)}</div></section></div>; }
+import { PageHeader } from "@/components/ui";
+import { HandoverList, HandoverSummary } from "@/features/handover/HandoverList";
+import { getSampleHandovers } from "@/features/handover/handoverData";
+
+export default function HandoversPage() {
+  const items = getSampleHandovers();
+  return (
+    <div className="space-y-7">
+      <PageHeader eyebrow="인수인계" title="담당자 인계" description="전달한 내용을 수신하고 조치할 때까지 상태를 확인합니다." />
+      <HandoverSummary items={items} />
+      <HandoverList items={items} />
+    </div>
+  );
+}
