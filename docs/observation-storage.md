@@ -3,21 +3,33 @@
 `web/src/features/recording/ObservationForm.tsx`에서 버튼 입력과 초안 확인 후
 `web/src/lib/db/observations.ts`를 통해 Supabase에 저장한다.
 
+## 기록 항목
+
+자유 입력 대신 버튼으로 선택한다. 2026-11-16부터 식사 시간대와 장기요양 기록의 관찰 범주를 참고해 아래 항목을 지원한다.
+
+- 식사·영양: 아침/점심/저녁, 식사량, 수분 섭취
+- 신체 상태: 배변, 배뇨, 이동, 통증, 피부, 수면
+- 인지·정서 상태: 기분, 인지 변화, 의사소통
+- 돌봄·생활 지원: 개인위생, 구강관리, 복약, 활동 참여, 정서 지원
+
+이 화면은 법정 서식을 대체하는 문서가 아니라 현장 관찰을 빠짐없이 남기기 위한 서비스 입력 화면이다.
+
 ## 개발 프로젝트 준비
 
 1. `supabase/migrations/202611140001_observations.sql`을 개발 프로젝트 SQL Editor에서 실행한다.
-2. Supabase Authentication 설정에서 Anonymous sign-ins를 활성화한다.
-3. `.env.local`의 URL은 `https://<project-ref>.supabase.co` 형식이다. `/rest/v1/`을 붙이지 않는다.
-4. 개발 서버를 재시작한다.
+2. 기존 개발 프로젝트에는 이어서 `supabase/migrations/202611160001_expand_observation_fields.sql`을 실행한다.
+3. Supabase Authentication 설정에서 Anonymous sign-ins를 활성화한다.
+4. `.env.local`의 URL은 `https://<project-ref>.supabase.co` 형식이다. `/rest/v1/`을 붙이지 않는다.
+5. 개발 서버를 재시작한다.
 
 작성자별 RLS를 적용하므로 다른 사용자의 기록은 읽거나 쓸 수 없다.
 브라우저의 로그인 세션을 지우면 익명 계정의 기존 기록에 접근할 수 없으므로,
 팀 공동 사용 전 영구 로그인과 팀 권한 정책으로 전환한다.
-현재 resident ID는 화면의 개발용 예시 3명으로 제한한다.
+현재 resident ID는 화면의 개발용 예시 3명으로 제한한다. 새 열은 과거 네 항목 기록과의 호환을 위해 데이터베이스에서는 nullable이며, 웹 화면이 새 기록의 전체 항목 선택을 검사한다.
 
 ## 확인 항목
 
-- 네 항목을 선택하고 내용 확인 체크 후 저장할 수 있다.
+- 17개 항목을 선택하고 내용 확인 체크 후 저장할 수 있다.
 - DB 응답 성공 후에만 저장 성공을 표시한다.
 - 새로고침 후 같은 브라우저에서 기록이 다시 표시된다.
 - 실패하면 입력을 유지하며 같은 요청 ID로 재시도한다.
