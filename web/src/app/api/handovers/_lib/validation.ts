@@ -2,6 +2,14 @@ import { CATEGORIES, HandoverError, type Category, type CreateHandoverInput } fr
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+export function isUuid(value: unknown): value is string {
+  return typeof value === "string" && UUID.test(value);
+}
+
+export function isResidentId(value: unknown): value is string {
+  return typeof value === "string" && (/^resident-[123]$/.test(value) || isUuid(value));
+}
+
 function invalid(field: string, message: string): never {
   throw new HandoverError("VALIDATION_ERROR", "인계 입력을 확인해 주세요.", { [field]: message });
 }
@@ -25,7 +33,7 @@ function text(value: unknown, path: string, max: number): string {
 }
 
 function uuid(value: unknown, path: string): string {
-  if (typeof value !== "string" || !UUID.test(value)) invalid(path, "유효한 UUID를 보내 주세요.");
+  if (!isUuid(value)) invalid(path, "유효한 UUID를 보내 주세요.");
   return value.toLowerCase();
 }
 
@@ -65,7 +73,7 @@ export function parseCreateHandover(value: unknown): CreateHandoverInput {
   ]);
   const id = uuid(input.id, "id");
   const resident = text(input.resident_id, "resident_id", 100);
-  if (!/^resident-[123]$/.test(resident) && !UUID.test(resident)) {
+  if (!isResidentId(resident)) {
     invalid("resident_id", "어르신 ID를 확인해 주세요.");
   }
   const observations = array(input.observation_ids, "observation_ids", 20)

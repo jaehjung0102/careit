@@ -1,9 +1,11 @@
 // Fictional, per-test memory storage. Never import this module from route.ts.
-import { HandoverError, type CreateHandoverEvent, type CreateHandoverInput, type Handover } from "../_lib/contract";
+import { HandoverError, isHandoverOverdue, type CreateHandoverEvent, type CreateHandoverInput, type Handover } from "../_lib/contract";
 import { createPostHandover, type CreateHandoverDependencies } from "../_lib/create-handover";
+import { createGetHandovers, type ListHandoverDependencies } from "../_lib/list-handovers";
 
 export const SENDER = "30000000-0000-4000-8000-000000000002";
 export const RECIPIENT = "30000000-0000-4000-8000-000000000001";
+export const OTHER = "30000000-0000-4000-8000-000000000003";
 export const INPUT: CreateHandoverInput = {
   id: "10000000-0000-4000-8000-000000000001",
   resident_id: "resident-1",
@@ -24,18 +26,26 @@ export function request(body: unknown = INPUT, token = "demo-sender"): Request {
   });
 }
 
+export function listRequest(query = "", token = "demo-sender"): Request {
+  return new Request(`http://localhost/api/handovers${query ? `?${query}` : ""}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
 export function fixture() {
   let time = new Date("2026-11-17T09:00:00.000Z");
   let accessAllowed = true;
   const rows = new Map<string, { owner: string; original: string; handover: Handover }>();
   const events: CreateHandoverEvent[] = [];
   let writes = 0;
-  const dependencies: CreateHandoverDependencies = {
+  let listReads = 0;
+  const dependencies: CreateHandoverDependencies & ListHandoverDependencies = {
     now: () => new Date(time),
     newEventId: () => "50000000-0000-4000-8000-000000000001",
     async authenticate(token) {
       if (token === "demo-sender") return { id: SENDER };
       if (token === "demo-recipient") return { id: RECIPIENT };
+      if (token === "demo-other") return { id: OTHER };
       if (token === "demo-family") return { id: "family" };
       throw new HandoverError("UNAUTHENTICATED", "로그인을 확인해 주세요.");
     },
@@ -48,6 +58,25 @@ export function fixture() {
     },
     repository: {
       dataSource: "mock",
+      async listVisible(actor, query, asOf) {
+        listReads += 1;
+        if (actor.id === "family") throw new HandoverError("FORBIDDEN", "인계 조회 권한이 없습니다.");
+        if (!accessAllowed) return [];
+        const rowsInView = [...rows.values()].map((entry) => entry.handover)
+          // Fictional access policy only: two residents in this demo facility,
+          // sender/recipient access. Resident 3 represents an inaccessible facility.
+          .filter((row) => ["resident-1", "resident-2"].includes(row.resident_id)
+            && (row.sender_id === actor.id || row.assignee_id === actor.id))
+          .filter((row) => (query.resident_id === null || row.resident_id === query.resident_id)
+            && (query.assignee_id === null || row.assignee_id === query.assignee_id)
+            && (query.status === null || row.status === query.status)
+            && (query.overdue === null || isHandoverOverdue(row, asOf) === query.overdue))
+          .filter((row) => !query.after || Date.parse(row.created_at) < Date.parse(query.after.created_at)
+            || (Date.parse(row.created_at) === Date.parse(query.after.created_at) && row.id < query.after.id))
+          .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at)
+            || (a.id === b.id ? 0 : a.id < b.id ? 1 : -1));
+        return structuredClone(rowsInView.slice(0, query.limit + 1));
+      },
       async createOnce(actor, input, build) {
         // No await between lookup and insert: atomic ONLY within this test's
         // JS process. B1's database adapter needs a real transaction/unique key.
@@ -69,8 +98,9 @@ export function fixture() {
     },
   };
   return {
-    dependencies, post: createPostHandover(dependencies), rows, events,
+    dependencies, post: createPostHandover(dependencies), get: createGetHandovers(dependencies), rows, events,
     writes: () => writes,
+    listReads: () => listReads,
     setTime: (value: string) => { time = new Date(value); },
     revokeAccess: () => { accessAllowed = false; },
   };

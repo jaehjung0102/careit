@@ -1,10 +1,10 @@
 import {
-  CONTRACT_VERSION, HandoverError, type CreateHandoverEvent,
-  type CreateHandoverInput, type Handover,
+  CONTRACT_VERSION, HandoverError, isHandoverOverdue, type CreateHandoverEvent,
+  type CreateHandoverInput, type Handover, type HandoverActor,
 } from "./contract";
+import { authenticateRequest, errorResponse } from "./http";
 import { parseCreateHandover } from "./validation";
 
-type Actor = { id: string };
 type NewHandover = { handover: Handover; event: CreateHandoverEvent };
 
 export interface HandoverRepository {
@@ -17,7 +17,7 @@ export interface HandoverRepository {
    * build for a replay (its deadline may have passed). Recheck permissions in
    * the transaction and enforce current access before returning any row.
    */
-  createOnce(actor: Actor, input: CreateHandoverInput, build: () => NewHandover): Promise<{
+  createOnce(actor: HandoverActor, input: CreateHandoverInput, build: () => NewHandover): Promise<{
     handover: Handover;
     created: boolean;
   }>;
@@ -25,38 +25,22 @@ export interface HandoverRepository {
 
 export interface CreateHandoverDependencies {
   // Verify the bearer token with the auth provider; never decode and trust it.
-  authenticate(token: string): Promise<Actor>;
+  authenticate(token: string): Promise<HandoverActor>;
   // Check creator role, resident, assignee's facility and both users' access
   // to every source observation. Run for retries too; revoked access stays revoked.
-  authorizeCreate(actor: Actor, input: CreateHandoverInput): Promise<void>;
+  authorizeCreate(actor: HandoverActor, input: CreateHandoverInput): Promise<void>;
   repository: HandoverRepository;
   now?: () => Date;
   newEventId?: () => string;
 }
 
-function errorResponse(error: unknown): Response {
-  const known = error instanceof HandoverError;
-  return Response.json({
-    error: {
-      code: known ? error.code : "INTERNAL_ERROR",
-      message: known ? error.message : "인계를 생성하지 못했습니다.",
-      ...(known && error.fields ? { fields: error.fields } : {}),
-      retryable: known && error.code === "SERVICE_UNAVAILABLE",
-    },
-    meta: { contract_version: CONTRACT_VERSION },
-  }, { status: known ? error.status : 500, headers: { "Cache-Control": "no-store" } });
-}
-
 export function createPostHandover(dependencies?: CreateHandoverDependencies) {
   return async function POST(request: Request): Promise<Response> {
     try {
-      const token = /^Bearer ([^\s,]+)$/i.exec(request.headers.get("authorization") ?? "")?.[1];
-      if (!token) throw new HandoverError("UNAUTHENTICATED", "로그인이 필요합니다.");
+      const actor = await authenticateRequest(request, dependencies);
       if (!dependencies) {
         throw new HandoverError("DEPENDENCY_NOT_READY", "인계 저장·권한 연결을 준비 중입니다.");
       }
-      const actor = await dependencies.authenticate(token);
-      if (!actor.id) throw new HandoverError("UNAUTHENTICATED", "로그인을 확인해 주세요.");
       if (request.headers.get("content-type")?.split(";")[0].trim().toLowerCase() !== "application/json") {
         throw new HandoverError("INVALID_REQUEST", "JSON 형식으로 보내 주세요.");
       }
@@ -93,14 +77,13 @@ export function createPostHandover(dependencies?: CreateHandoverDependencies) {
       // Overdue is derived at response time, including on retries.
       const data: Handover = {
         ...saved.handover,
-        is_overdue: !["completed", "cancelled"].includes(saved.handover.status)
-          && Date.parse(saved.handover.due_at) < now().getTime(),
+        is_overdue: isHandoverOverdue(saved.handover, now()),
       };
       return Response.json({ data, meta: {
         contract_version: CONTRACT_VERSION, data_source: dependencies.repository.dataSource,
       } }, { status: saved.created ? 201 : 200, headers: { "Cache-Control": "no-store" } });
     } catch (error) {
-      return errorResponse(error);
+      return errorResponse(error, "인계를 생성하지 못했습니다.");
     }
   };
 }

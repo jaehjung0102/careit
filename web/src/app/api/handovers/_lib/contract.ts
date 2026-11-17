@@ -7,7 +7,9 @@ export const CATEGORIES = [
   "activity", "emotional_support",
 ] as const;
 export type Category = (typeof CATEGORIES)[number];
-export type HandoverStatus = "sent" | "acknowledged" | "in_progress" | "completed" | "cancelled";
+export const HANDOVER_STATUSES = ["sent", "acknowledged", "in_progress", "completed", "cancelled"] as const;
+export type HandoverStatus = (typeof HANDOVER_STATUSES)[number];
+export type HandoverActor = { id: string };
 
 export type CreateHandoverInput = {
   id: string;
@@ -53,6 +55,11 @@ export type CreateHandoverEvent = {
   version_before: 0;
   version_after: 1;
 };
+
+export function isHandoverOverdue(handover: Pick<Handover, "status" | "due_at">, now: Date): boolean {
+  return handover.status !== "completed" && handover.status !== "cancelled"
+    && Date.parse(handover.due_at) < now.getTime();
+}
 
 const ERROR_STATUS = {
   INVALID_REQUEST: 400,
