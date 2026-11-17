@@ -56,6 +56,25 @@ export type CreateHandoverEvent = {
   version_after: 1;
 };
 
+export type AcknowledgeHandoverInput = {
+  request_id: string;
+  expected_version: number;
+  action: "acknowledge";
+};
+
+export type AcknowledgeHandoverEvent = Omit<CreateHandoverEvent,
+  "action" | "from_status" | "to_status" | "from_assignee_id" | "version_before" | "version_after"
+> & {
+  action: "acknowledge";
+  from_status: "sent";
+  to_status: "acknowledged";
+  from_assignee_id: string;
+  version_before: number;
+  version_after: number;
+};
+
+export type ImplementedHandoverEvent = CreateHandoverEvent | AcknowledgeHandoverEvent;
+
 export function isHandoverOverdue(handover: Pick<Handover, "status" | "due_at">, now: Date): boolean {
   return handover.status !== "completed" && handover.status !== "cancelled"
     && Date.parse(handover.due_at) < now.getTime();
@@ -67,6 +86,8 @@ const ERROR_STATUS = {
   FORBIDDEN: 403,
   NOT_FOUND: 404,
   IDEMPOTENCY_CONFLICT: 409,
+  VERSION_CONFLICT: 409,
+  INVALID_TRANSITION: 409,
   VALIDATION_ERROR: 422,
   DEPENDENCY_NOT_READY: 503,
   SERVICE_UNAVAILABLE: 503,
