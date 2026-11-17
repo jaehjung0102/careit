@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Careit voice feasibility</title>
+<style>
+  body { font: 16px/1.5 system-ui; max-width: 880px; margin: 40px auto; padding: 0 20px; color: #172a32; background: #f4f8f7; }
+  button { font: inherit; background: #11634b; color: white; padding: 12px 18px; border: 0; border-radius: 8px; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: wait; }
+  pre { white-space: pre-wrap; overflow-wrap: anywhere; padding: 20px; background: white; border: 1px solid #c4d7d1; border-radius: 8px; }
+</style>
+<h1>Careit voice feasibility</h1>
+<p>This development check records a generated one-second tone inside the browser. It does not open your microphone, play sound, or send audio anywhere.</p>
+<p>It checks browser recording and decoding. Korean recognition and real microphone testing are separate checks.</p>
+<button id="test" type="button">Test synthetic recording</button>
+<p id="status" role="status">Ready.</p>
+<pre id="report"></pre>
+<script>
+  const formats = ["audio/webm;codecs=opus", "audio/mp4", "audio/ogg;codecs=opus"];
+  const report = {
+    browser: navigator.userAgent,
+    secure_context: window.isSecureContext,
+    microphone_api_available: !!navigator.mediaDevices?.getUserMedia,
+    recorder_available: typeof MediaRecorder !== "undefined",
+    speech_recognition_api_present: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
+    recognition_started: false,
+    microphone_requested: false,
+    network_upload: false,
+    formats: Object.fromEntries(formats.map(type => [type, typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(type)])),
+    synthetic_recording: null,
+    limitations: ["API presence is not proof recognition works.", "No microphone, permission-denial, mobile or human speech test."]
+  };
+  const display = () => { document.querySelector("#report").textContent = JSON.stringify(report, null, 2); };
+  display();
+  document.querySelector("#test").addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    document.querySelector("#status").textContent = "Testing generated audio…";
+    let context, oscillator, destination, recorder, stopTimer, timeoutTimer;
+    try {
+      if (!report.recorder_available) throw new Error("MediaRecorder is unavailable.");
+      context = new AudioContext();
+      await context.resume();
+      destination = context.createMediaStreamDestination();
+      oscillator = context.createOscillator();
+      oscillator.frequency.value = 440;
+      oscillator.connect(destination);
+      const selected = formats.find(type => report.formats[type]);
+      recorder = selected ? new MediaRecorder(destination.stream, {mimeType: selected}) : new MediaRecorder(destination.stream);
+      const chunks = [];
+      const blob = await new Promise((resolve, reject) => {
+        recorder.ondataavailable = event => { if (event.data.size) chunks.push(event.data); };
+        recorder.onerror = () => reject(new Error("Browser recording failed."));
+        recorder.onstop = () => resolve(new Blob(chunks, {type: recorder.mimeType}));
+        timeoutTimer = setTimeout(() => reject(new Error("Recording timed out.")), 5000);
+        recorder.start();
+        oscillator.start();
+        stopTimer = setTimeout(() => recorder.stop(), 1000);
+      });
+      clearTimeout(timeoutTimer);
+      const decoded = await context.decodeAudioData(await blob.arrayBuffer());
+      const samples = decoded.getChannelData(0);
+      let peak = 0;
+      for (const sample of samples) peak = Math.max(peak, Math.abs(sample));
+      report.synthetic_recording = {
+        passed: blob.size > 0 && decoded.duration > .5 && peak > .01,
+        selected_mime: selected || "browser default",
+        actual_mime: blob.type,
+        bytes: blob.size,
+        decoded_seconds: decoded.duration,
+        sample_rate: decoded.sampleRate,
+        peak_amplitude: peak
+      };
+      document.querySelector("#status").textContent = report.synthetic_recording.passed ? "Synthetic recording and decoding passed." : "Recording check failed.";
+    } catch (error) {
+      report.synthetic_recording = {passed: false, error: String(error)};
+      document.querySelector("#status").textContent = "Check failed; see details below.";
+    } finally {
+      clearTimeout(stopTimer);
+      clearTimeout(timeoutTimer);
+      if (recorder && recorder.state !== "inactive") recorder.stop();
+      if (oscillator) { try { oscillator.stop(); } catch {} }
+      destination?.stream.getTracks().forEach(track => track.stop());
+      if (context) await context.close();
+      button.disabled = false;
+      display();
+    }
+  });
+</script>
+</html>

@@ -1,0 +1,121 @@
+{
+  "data_source": "synthetic; not human/microphone/clinical validation",
+  "platform": "Darwin-25.2.0-arm64-arm-64bit-Mach-O",
+  "processor": "arm64",
+  "model": "ggml-small.bin",
+  "model_sha1": "55356645c2b361a969dfd0ef2c5a50d530afd8d5",
+  "language": "ko",
+  "threads": 4,
+  "timing_scope": "one CLI process per clip, including model loading and transcription; excludes speech duration, recording, upload, editing, AI draft and final save",
+  "prompt": null,
+  "semantic_assessment": "See assessment.json; agent review against scripted facts, not independently validated human scoring",
+  "cases": [
+    {
+      "id": "01_baseline",
+      "voice": "Yuna",
+      "spoken_text": "점심은 오십 퍼센트 드셨고, 물은 백오십 밀리리터 드셨습니다. 보행 시 휘청거림은 없었습니다.",
+      "required_facts": [
+        "점심 섭취율 50%",
+        "이번 물 섭취량 150mL",
+        "보행 시 휘청거림 없음"
+      ],
+      "check": "수분 150mL를 하루 총량으로 바꾸지 않는다.",
+      "audio_seconds": 6.899,
+      "wall_seconds": 2.635,
+      "exit_code": 0,
+      "transcript": "점심은 50% 드셨고, 물은 150ml 드셨습니다. 보행시 휘청거림은 없었습니다."
+    },
+    {
+      "id": "02_positive_finding",
+      "voice": "Eddy (Korean (South Korea))",
+      "spoken_text": "오후 세 시에 보행 중 휘청거림이 있었습니다. 직원 한 명의 도움이 필요했습니다.",
+      "required_facts": [
+        "관찰 시각 오후 3시",
+        "보행 중 휘청거림 있음",
+        "직원 1명의 도움 필요"
+      ],
+      "check": "01의 부정 표현과 반대 의미를 구별한다.",
+      "audio_seconds": 8.062,
+      "wall_seconds": 2.239,
+      "exit_code": 0,
+      "transcript": "오세시의 보행 중 위점거림이 있었습니다. 지금 안 면리 도움이 필요했습니다."
+    },
+    {
+      "id": "03_unknown",
+      "voice": "Yuna",
+      "spoken_text": "오늘 물 섭취량은 확인하지 못했습니다. 통증 여부도 확인하지 못했습니다.",
+      "required_facts": [
+        "물 섭취량 미확인",
+        "통증 여부 미확인"
+      ],
+      "check": "미확인을 0mL 또는 통증 없음으로 바꾸지 않는다.",
+      "audio_seconds": 5.164,
+      "wall_seconds": 2.58,
+      "exit_code": 0,
+      "transcript": "오늘 물 석취량은 확인하지 못했습니다. 통증 여부도 확인하지 못했습니다."
+    },
+    {
+      "id": "04_zero_event",
+      "voice": "Eddy (Korean (South Korea))",
+      "spoken_text": "오후 두 시에 물을 권했지만 마시지 않아 이번 섭취량은 영 밀리리터입니다. 하루 총량은 확인하지 못했습니다.",
+      "required_facts": [
+        "관찰 시각 오후 2시",
+        "이번 물 섭취량 0mL",
+        "하루 총량 미확인"
+      ],
+      "check": "명시적 0과 미확인, 사건과 하루 총량을 각각 구별한다.",
+      "audio_seconds": 10.655,
+      "wall_seconds": 3.758,
+      "exit_code": 0,
+      "transcript": "오후 2시에 물을 끓였지만 마시지 않아 이번 섭취량은 10ml입니다. 하루 종량은 확인하지 못했습니다."
+    },
+    {
+      "id": "05_decimal",
+      "voice": "Yuna",
+      "spoken_text": "오전 아홉 시 체온은 삼십육 점 오 도입니다. 통증은 없다고 말씀하셨습니다.",
+      "required_facts": [
+        "관찰 시각 오전 9시",
+        "체온 36.5도",
+        "통증 없다고 말함"
+      ],
+      "check": "소수점과 통증 부정 표현을 보존한다. 체온은 전사 시험용이며 공용 관찰 스키마에 새 필드를 추가하는 제안이 아니다.",
+      "audio_seconds": 5.675,
+      "wall_seconds": 3.502,
+      "exit_code": 0,
+      "transcript": "오전 9시 채 오는 36.5도입니다. 통증은 없다고 말씀하셨습니다."
+    },
+    {
+      "id": "06_spoken_correction",
+      "voice": "Eddy (Korean (South Korea))",
+      "spoken_text": "물 오십 밀리리터, 아니 백오십 밀리리터를 드셨습니다. 점심은 절반 드셨고 기침은 없었습니다.",
+      "required_facts": [
+        "물 섭취량을 50mL에서 150mL로 정정",
+        "점심 절반 섭취",
+        "기침 없음"
+      ],
+      "check": "말한 정정을 유지한다. 정정 전후 값을 더하거나 임의 선택하지 않는다.",
+      "audio_seconds": 9.454,
+      "wall_seconds": 1.877,
+      "exit_code": 0,
+      "transcript": "50ml, 한 150ml를 드셨습니다. 점심은 절반 드셨고 기침은 없었습니다."
+    },
+    {
+      "id": "07_silence",
+      "voice": null,
+      "spoken_text": "",
+      "required_facts": [],
+      "check": "5초 무음. 사실 문장을 생성하면 실패. 사용 가능한 음성이 없다고 표시하고 재녹음/직접 입력을 제공해야 한다.",
+      "audio_seconds": 5.0,
+      "wall_seconds": 1.516,
+      "exit_code": 0,
+      "transcript": "-감사합니다. -감사합니다."
+    }
+  ],
+  "whisper_cpp_version": "v1.9.5",
+  "whisper_cpp_commit": "d1be6fde11ac6e0407606b4e42fe72d34add8037",
+  "model_source": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin",
+  "build": "Release, GGML_METAL=OFF; Apple Accelerate enabled",
+  "speech_rate": 170,
+  "run": "voice-local-small-run2",
+  "date": "2026-11-17"
+}

@@ -1,0 +1,100 @@
+{
+  "reviewer": "Codex agent; team/native-speaker review pending",
+  "scope": "Script-to-transcript comparison of six synthetic clips. No human listening study. Ambiguous critical facts are not counted as correct; punctuation and harmless spelling variation are tolerated.",
+  "decision": "Continue only with an editable draft and mandatory review; current setup fails an unreviewed-auto-save gate.",
+  "cases": [
+    {
+      "id": "01_baseline",
+      "facts_preserved": [
+        true,
+        true,
+        true
+      ],
+      "needs_correction": false,
+      "findings": [
+        "50%, 150ml, and no staggering preserved; no daily-total assertion added."
+      ]
+    },
+    {
+      "id": "02_positive_finding",
+      "facts_preserved": [
+        false,
+        false,
+        false
+      ],
+      "needs_correction": true,
+      "findings": [
+        "오후 세 시 → 오세시의: time is unclear.",
+        "휘청거림 → 위점거림: the finding is garbled.",
+        "직원 한 명의 → 지금 안 면리: staff identity/count is lost."
+      ]
+    },
+    {
+      "id": "03_unknown",
+      "facts_preserved": [
+        true,
+        true
+      ],
+      "needs_correction": false,
+      "findings": [
+        "Both unknowns preserved. 석취량 is a spelling error, but the water-intake meaning remains clear."
+      ]
+    },
+    {
+      "id": "04_zero_event",
+      "facts_preserved": [
+        true,
+        false,
+        true
+      ],
+      "needs_correction": true,
+      "findings": [
+        "0mL → 10ml: wrong numeric fact.",
+        "권했지만 → 끓였지만: offered water became boiled water; an unsupported action.",
+        "Daily amount still stated as unknown despite 종량 typo."
+      ]
+    },
+    {
+      "id": "05_decimal",
+      "facts_preserved": [
+        true,
+        false,
+        true
+      ],
+      "needs_correction": true,
+      "findings": [
+        "36.5도 and no pain survived, but 체온 → 채 오는 loses an explicit temperature label. Conservatively do not mark the complete temperature fact correct."
+      ]
+    },
+    {
+      "id": "06_spoken_correction",
+      "facts_preserved": [
+        false,
+        true,
+        true
+      ],
+      "needs_correction": true,
+      "findings": [
+        "50ml and 150ml both present, but 아니 became 한; the correction relationship is ambiguous.",
+        "Half the lunch and no cough preserved."
+      ]
+    },
+    {
+      "id": "07_silence",
+      "facts_preserved": [],
+      "needs_correction": true,
+      "findings": [
+        "Exact digital silence produced -감사합니다. -감사합니다. No patient fact, but unsupported text; silence handling fails."
+      ]
+    }
+  ],
+  "interpretation": "Do not publish an overall accuracy percentage from this tiny synthetic set. Voice identity differs between cases, so error causes and general human accuracy cannot be inferred.",
+  "pending": [
+    "Real Korean speakers and actual microphone capture",
+    "Phone browsers and permission denial",
+    "Noise/interruptions and upload failures",
+    "Chosen deployment/provider, timeout and audio limits",
+    "Silence/no-speech rejection and human correction flow",
+    "End-to-end completion timing including correction, draft review and final save"
+  ]
+}
