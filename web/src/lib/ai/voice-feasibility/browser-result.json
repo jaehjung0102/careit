@@ -1,0 +1,28 @@
+{
+  "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+  "secure_context": true,
+  "microphone_api_available": true,
+  "recorder_available": true,
+  "speech_recognition_api_present": true,
+  "recognition_started": false,
+  "microphone_requested": false,
+  "network_upload": false,
+  "formats": {
+    "audio/webm;codecs=opus": true,
+    "audio/mp4": true,
+    "audio/ogg;codecs=opus": false
+  },
+  "synthetic_recording": {
+    "passed": true,
+    "selected_mime": "audio/webm;codecs=opus",
+    "actual_mime": "audio/webm;codecs=opus",
+    "bytes": 14786,
+    "decoded_seconds": 0.9,
+    "sample_rate": 48000,
+    "peak_amplitude": 1.010528326034546
+  },
+  "limitations": [
+    "API presence is not proof recognition works.",
+    "No microphone, permission-denial, mobile or human speech test."
+  ]
+}
