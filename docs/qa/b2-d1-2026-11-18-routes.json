@@ -1,0 +1,224 @@
+{
+  "checked_at": "2026-11-17T22:55:42.312978+00:00",
+  "base_url": "https://careit-eight.vercel.app",
+  "source_commit": "c0c611439eb350da89627c78c8c23350be587d76",
+  "scope": "No valid credentials; empty bodies; authentication rejection only. No real record creation or AI requests.",
+  "results": [
+    {
+      "method": "GET",
+      "path": "/",
+      "auth": "none",
+      "expected_status": 200,
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "cache_control": "public, max-age=0, must-revalidate",
+      "matches_current_implementation": true
+    },
+    {
+      "method": "GET",
+      "path": "/recordings",
+      "auth": "none",
+      "expected_status": 200,
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "cache_control": "public, max-age=0, must-revalidate",
+      "matches_current_implementation": true
+    },
+    {
+      "method": "GET",
+      "path": "/changes",
+      "auth": "none",
+      "expected_status": 200,
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "cache_control": "public, max-age=0, must-revalidate",
+      "matches_current_implementation": true
+    },
+    {
+      "method": "GET",
+      "path": "/handovers",
+      "auth": "none",
+      "expected_status": 200,
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "cache_control": "public, max-age=0, must-revalidate",
+      "matches_current_implementation": true
+    },
+    {
+      "method": "GET",
+      "path": "/admin",
+      "auth": "none",
+      "expected_status": 200,
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "cache_control": "public, max-age=0, must-revalidate",
+      "matches_current_implementation": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/handovers",
+      "auth": "none",
+      "expected_status": 401,
+      "status": 401,
+      "content_type": "application/json",
+      "cache_control": "no-store",
+      "error": {
+        "code": "UNAUTHENTICATED",
+        "message": "로그인이 필요합니다.",
+        "retryable": false
+      },
+      "meta": {
+        "contract_version": "b2-01-draft-3"
+      },
+      "matches_current_implementation": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/handovers",
+      "auth": "synthetic-invalid",
+      "expected_status": 503,
+      "status": 503,
+      "content_type": "application/json",
+      "cache_control": "no-store",
+      "error": {
+        "code": "DEPENDENCY_NOT_READY",
+        "message": "인계 저장·권한 연결을 준비 중입니다.",
+        "retryable": false
+      },
+      "meta": {
+        "contract_version": "b2-01-draft-3"
+      },
+      "matches_current_implementation": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/handovers",
+      "auth": "none",
+      "expected_status": 401,
+      "status": 401,
+      "content_type": "application/json",
+      "cache_control": "no-store",
+      "error": {
+        "code": "UNAUTHENTICATED",
+        "message": "로그인이 필요합니다.",
+        "retryable": false
+      },
+      "meta": {
+        "contract_version": "b2-01-draft-3"
+      },
+      "matches_current_implementation": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/handovers",
+      "auth": "synthetic-invalid",
+      "expected_status": 503,
+      "status": 503,
+      "content_type": "application/json",
+      "cache_control": "no-store",
+      "error": {
+        "code": "DEPENDENCY_NOT_READY",
+        "message": "인계 저장·권한 연결을 준비 중입니다.",
+        "retryable": false
+      },
+      "meta": {
+        "contract_version": "b2-01-draft-3"
+      },
+      "matches_current_implementation": true
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/handovers/00000000-0000-4000-8000-000000000045",
+      "auth": "none",
+      "expected_status": 401,
+      "status": 401,
+      "content_type": "application/json",
+      "cache_control": "no-store",
+      "error": {
+        "code": "UNAUTHENTICATED",
+        "message": "로그인이 필요합니다.",
+        "retryable": false
+      },
+      "meta": {
+        "contract_version": "b2-01-draft-3"
+      },
+      "matches_current_implementation": true
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/handovers/00000000-0000-4000-8000-000000000045",
+      "auth": "synthetic-invalid",
+      "expected_status": 503,
+      "status": 503,
+      "content_type": "application/json",
+      "cache_control": "no-store",
+      "error": {
+        "code": "DEPENDENCY_NOT_READY",
+        "message": "인계 저장·권한 연결을 준비 중입니다.",
+        "retryable": false
+      },
+      "meta": {
+        "contract_version": "b2-01-draft-3"
+      },
+      "matches_current_implementation": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/handovers",
+      "auth": "synthetic-invalid",
+      "expected_status": 401,
+      "status": 401,
+      "content_type": "application/json",
+      "cache_control": "no-store",
+      "error": {
+        "code": "UNAUTHENTICATED",
+        "message": "로그인이 필요합니다.",
+        "retryable": false
+      },
+      "meta": {
+        "contract_version": "b2-01-draft-3"
+      },
+      "matches_current_implementation": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/handovers/00000000-0000-4000-8000-000000000045",
+      "auth": "none",
+      "expected_status": 405,
+      "status": 405,
+      "content_type": null,
+      "cache_control": "public, max-age=0, must-revalidate",
+      "matches_current_implementation": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/drafts",
+      "auth": "none",
+      "expected_status": 404,
+      "status": 404,
+      "content_type": "text/html; charset=utf-8",
+      "cache_control": "public, max-age=0, must-revalidate",
+      "matches_current_implementation": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/changes",
+      "auth": "none",
+      "expected_status": 404,
+      "status": 404,
+      "content_type": "text/html; charset=utf-8",
+      "cache_control": "public, max-age=0, must-revalidate",
+      "matches_current_implementation": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/recordings",
+      "auth": "none",
+      "expected_status": 404,
+      "status": 404,
+      "content_type": "text/html; charset=utf-8",
+      "cache_control": "public, max-age=0, must-revalidate",
+      "matches_current_implementation": true
+    }
+  ]
+}
