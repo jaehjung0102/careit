@@ -1,4 +1,4 @@
-# 돌봄잇 Issue 할당표 (2026-11-17 현재)
+# 돌봄잇 Issue 할당표 (2026-11-18 현재)
 
 `[F1-03]`은 담당자별 계획 코드이고 `#3`은 GitHub의 실제 Issue 번호다. 문서와 GitHub를 함께 볼 때는 항상 **`[F1-03] / #3`**처럼 확인한다.
 
@@ -16,23 +16,23 @@
 ## 현재 상태
 
 - **완료·Closed:** [[F1-02] / #2](https://github.com/jaehjung0102/careit/issues/2), [[F1-D1] / #42](https://github.com/jaehjung0102/careit/issues/42)
-- **검토 중 PR:** [[F2-01] / #9](https://github.com/jaehjung0102/careit/issues/9) → PR #39, [[B2-01] / #25](https://github.com/jaehjung0102/careit/issues/25) → PR #40, [[B2-02] / #26](https://github.com/jaehjung0102/careit/issues/26) → PR #41
-- **merge하지 않음:** PR #37은 이전 협업 문서이며 현재 `main`과 충돌한다. 새 계획 문서 PR이 이를 대체한다.
-- **배포 검증 Open:** [[F2-D1] / #43](https://github.com/jaehjung0102/careit/issues/43), [[B1-D1] / #44](https://github.com/jaehjung0102/careit/issues/44), [[B2-D1] / #45](https://github.com/jaehjung0102/careit/issues/45)
+- **PR merge, Issue 확인 필요:** [[F2-01] / #9](https://github.com/jaehjung0102/careit/issues/9) → PR #39 merge, [[B2-01] / #25](https://github.com/jaehjung0102/careit/issues/25) → PR #40 merge, [[B2-02] / #26](https://github.com/jaehjung0102/careit/issues/26) → PR #41 merge. 세 Issue는 아직 Open이며 완료 증거를 댓글로 남긴 뒤 닫는다.
+- **오늘 완료 증거 필요:** [[F1-01] / #1](https://github.com/jaehjung0102/careit/issues/1), [[B1-01] / #17](https://github.com/jaehjung0102/careit/issues/17), [[F2-D1] / #43](https://github.com/jaehjung0102/careit/issues/43), [[B1-D1] / #44](https://github.com/jaehjung0102/careit/issues/44)
+- **점검 완료·문서 리뷰 대기:** [[B2-D1] / #45](https://github.com/jaehjung0102/careit/issues/45) → PR #52 merge와 F2 확인 후 Close
 
 ## 11월 18일(수)까지 — 기반·계약·배포 검증
 
-- **F1 정재헌:** [[F1-01] / #1 — 협업 보드·main 보호·4인 실행](https://github.com/jaehjung0102/careit/issues/1). `[F1-02] / #2`, `[F1-D1] / #42`는 완료.
-- **F2 문수혁:** [[F2-01] / #9 — 기존 변화·인계·운영 화면 인수](https://github.com/jaehjung0102/careit/issues/9), [[F2-D1] / #43 — 모바일 배포 스모크 테스트](https://github.com/jaehjung0102/careit/issues/43).
-- **B1 이은규:** [[B1-01] / #17 — 관찰 DB 인수·어르신 데이터 설계](https://github.com/jaehjung0102/careit/issues/17), [[B1-D1] / #44 — Production Supabase·RLS 검증](https://github.com/jaehjung0102/careit/issues/44).
-- **B2 하이칼:** [[B2-01] / #25 — API 계약·업무 규칙](https://github.com/jaehjung0102/careit/issues/25), [[B2-D1] / #45 — 배포 API 경로·실패 흐름](https://github.com/jaehjung0102/careit/issues/45).
+- **F1 정재헌:** [[F1-01] / #1 — 협업 보드·main 보호·4인 실행](https://github.com/jaehjung0102/careit/issues/1) **Open**. 네 명의 실행 성공 댓글 확인 후 Close. `[F1-02] / #2`, `[F1-D1] / #42`는 완료.
+- **F2 문수혁:** [[F2-01] / #9 — 기존 변화·인계·운영 화면 인수](https://github.com/jaehjung0102/careit/issues/9) **PR #39 merge 완료, Production 확인 후 Close**. [[F2-D1] / #43 — 모바일 배포 스모크 테스트](https://github.com/jaehjung0102/careit/issues/43) **결과 댓글 필요**.
+- **B1 이은규:** [[B1-01] / #17 — 관찰 DB 인수·어르신 데이터 설계](https://github.com/jaehjung0102/careit/issues/17), [[B1-D1] / #44 — Production Supabase·RLS 검증](https://github.com/jaehjung0102/careit/issues/44) 모두 **PR·결과 댓글 필요**.
+- **B2 하이칼:** [[B2-01] / #25 — API 계약·업무 규칙](https://github.com/jaehjung0102/careit/issues/25) **PR #40 merge 완료, 팀 합의 댓글 후 Close**. [[B2-D1] / #45 — 배포 API 경로·실패 흐름](https://github.com/jaehjung0102/careit/issues/45) **점검 완료, PR #52 리뷰 대기**.
 
 ## 11월 22일(일)까지 — 독립 기능 첫 완성
 
 - **F1 정재헌:** [[F1-03] / #3 — AI 초안 검토·음성 입력 UI](https://github.com/jaehjung0102/careit/issues/3).
 - **F2 문수혁:** [[F2-02] / #10 — 인계 목록·상세·상태 UI](https://github.com/jaehjung0102/careit/issues/10).
 - **B1 이은규:** [[B1-02] / #18 — 팀 데모 인증·어르신 조회](https://github.com/jaehjung0102/careit/issues/18).
-- **B2 하이칼:** [[B2-02] / #26 — 인계 API·음성 기술 검증](https://github.com/jaehjung0102/careit/issues/26).
+- **B2 하이칼:** [[B2-02] / #26 — 인계 API·음성 기술 검증](https://github.com/jaehjung0102/careit/issues/26). **PR #41로 뼈대·기술 검증 선반영**. #25 계약 반영과 F2 확인 후 11월 22일까지 Close하며, 실제 DB 연결 완료로 오해하지 않는다.
 
 ## 11월 25일(수)까지 — 저장·이력·실패 처리
 
