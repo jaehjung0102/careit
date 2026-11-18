@@ -1,6 +1,8 @@
 # 돌봄잇 API 계약 초안 — draft-3
 
-상태: **팀 확인 전 초안** · 갱신 2026-11-17 · B2 하이칼 · [B2-01 / #25](https://github.com/jaehjung0102/careit/issues/25) · 지정 리뷰어 F2 문수혁 · 리뷰 승인 마감 11/18
+상태: **팀 확인 전 초안** · 계약 갱신 2026-11-17 / 배포 점검 보충 2026-11-18 · B2 하이칼 · [B2-01 / #25](https://github.com/jaehjung0102/careit/issues/25) · 지정 리뷰어 F2 문수혁 · 리뷰 승인 마감 11/18
+
+**11/18 배포 점검:** PR #39/#40/#41은 병합되었다. 아래 기존 계약의 11/17 코드·미병합 설명은 당시 조사 기록이며 최신 배포 상태는 12절을 따른다. 병합 사실만으로 C1–C8의 명시적 합의나 실제 DB/API 통합 완료를 주장하지 않는다.
 
 기획 근거: 11/16 15:46에 팀에 재공유된 최종기획안 14쪽(표지 작성일 11/13), 특히 p.7–11 기능과 p.13 검증 설계. **아래는 리뷰용 계약 제안이며 팀 승인·API 구현 완료를 뜻하지 않는다.** 승인 기록은 10절에 남긴다. 이 PR은 `docs/api.md`만 변경한다.
 
@@ -689,3 +691,43 @@ PR #39는 화면 인수 단계이며 현재 3개 상태의 mock를 쓴다. 아�
 - 현재 코드 기준: [PR #38](https://github.com/jaehjung0102/careit/pull/38), [17개 입력 항목](https://github.com/jaehjung0102/careit/blob/2338493bbc41258bcbc135355424a5c8a6f179e1/web/src/features/recording/observationFields.ts), [새 migration](https://github.com/jaehjung0102/careit/blob/2338493bbc41258bcbc135355424a5c8a6f179e1/supabase/migrations/202611160001_expand_observation_fields.sql). 아래 SQL 링크는 초기 기반의 출처다.
 - [확인한 관찰 SQL](https://github.com/jaehjung0102/careit/blob/4c55f017d533f3aab6d2f9cf8841715382b38a36/supabase/migrations/202611140001_observations.sql).
 - [저장 helper](https://github.com/jaehjung0102/careit/blob/2338493bbc41258bcbc135355424a5c8a6f179e1/web/src/lib/db/observations.ts), [입력 UI](https://github.com/jaehjung0102/careit/blob/2338493bbc41258bcbc135355424a5c8a6f179e1/web/src/features/recording/ObservationForm.tsx), [공통 타입](https://github.com/jaehjung0102/careit/blob/2338493bbc41258bcbc135355424a5c8a6f179e1/web/src/types/domain.ts).
+
+## 12. B2-D1 배포 환경·실패 응답 점검 (2026-11-18)
+
+관련 작업: [#45](https://github.com/jaehjung0102/careit/issues/45). 점검 URL: https://careit-eight.vercel.app/ . 소스 기준: `main@c0c611439eb350da89627c78c8c23350be587d76`. 배포의 내부 commit ID는 Vercel 관리 화면에서 확인하지 않았으며, 아래는 공개 배포에서 직접 관찰한 결과다.
+
+### 공개 설정과 서버 전용 비밀
+
+| 설정 | 위치·용도 | 현재 상태 |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | 브라우저 공개 설정. 공유 개발 Supabase 주소 | 현재 `lib/supabase/client.ts`에서 사용 |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | 브라우저 공개용 publishable key. 서버 비밀키가 아니며 RLS를 대체하지 않음 | 현재 브라우저 저장·조회에서 사용 |
+| AI 제공업체 인증키 | 서버 환경변수만 사용. `NEXT_PUBLIC_` 접두사, 클라이언트 코드, 응답, 로그에 포함 금지 | AI API 구현 시 변수명·제공업체·필수 여부 확정. 현재 구현은 사용하지 않음 |
+| Supabase `service_role`/secret key 또는 DB 비밀번호 | 비밀값. 브라우저 노출 금지; 현재 브라우저 저장과 인계 미연결 문제 해결을 위해 추가하지 않음 | 이번 작업에 필요하지 않음. 향후 필요성은 B1과 별도 검토; 시설 접근 검사를 우회하지 않음 |
+
+Vercel Root Directory는 `web`, Production은 `main` 기준이다. 공개 변수는 Preview/Production의 의도한 프로젝트에 각각 설정하고 변경 후 재배포하여 확인한다. 값이 아닌 변수명·대상 환경·설정 여부만 공유한다. 로컬 `.env*`는 Git ignore 대상이며 비밀값을 문서/Issue/캡처에 넣지 않는다. 이번 점검은 Vercel 비밀 환경변수 목록·값, 배포 번들의 전체 보안 감사, DB 정책의 실효성 검증을 포함하지 않는다.
+
+인계 API를 실제 연결하려면 환경변수 외에 **서버 토큰 검증, 시설·어르신·담당자 권한 검사, B1 DB/migration, 원자적 repository 어댑터 연결**이 필요하다. 공개 키를 넣는 것만으로 인계 저장이 활성화되지 않는다. 인증 어댑터 연결 후 잘못된/만료된 토큰은 401이어야 한다.
+
+### 배포에서 확인한 경로
+
+| 경로·방법 | 직접 확인한 응답 | 해석 |
+|---|---|---|
+| GET `/`, `/recordings`, `/changes`, `/handovers`, `/admin` | 모두 200, 브라우저 렌더링 정상 | 화면 접근 가능. 기능 전체 완료를 뜻하지 않음 |
+| GET/POST `/api/handovers`, PATCH `/api/handovers/{id}` | 인증 헤더 없음: 401 `UNAUTHENTICATED`; 가짜 Bearer 문자열: 503 `DEPENDENCY_NOT_READY` | 현재 B1 어댑터 미연결로 차단. 가짜 토큰이 인증되었다는 의미가 아님 |
+| GET `/api/handovers` + 잘못된 인증 방식 | 401 `UNAUTHENTICATED` | Bearer 형식 요구 |
+| GET `/api/handovers/{id}` | 405, JSON envelope 없음 | 단건 GET 미구현. 현재 PATCH만 등록 |
+| POST `/api/drafts`, GET `/api/changes`, GET `/api/recordings` | 404 HTML | 현재 미구현. `/recordings`의 저장·조회는 브라우저→Supabase helper 사용 |
+
+총 16개 HTTP 점검은 **현재 구현 상태**와 일치했다. 인계의 7개 오류 응답은 `Cache-Control: no-store`, `error.code/message/retryable`, `meta.contract_version=b2-01-draft-3`를 포함했다. 실사용 인증 토큰·개인정보 없이 빈 요청 본문과 가상 ID로 검사했고, 실제 저장·수신 상태 변경·AI 호출은 하지 않았다.
+
+앞으로 구현하는 API는 3절의 공통 JSON envelope와 상태 코드를 적용한다. `DEPENDENCY_NOT_READY`는 현재 `retryable=false`, 일시 장애 `SERVICE_UNAVAILABLE`은 `retryable=true`다. 404 HTML/405 빈 응답 또는 네트워크 오류를 받는 클라이언트도 JSON 파싱 오류나 빈 성공으로 처리하지 말고 기능 미준비/실패를 표시해야 한다. 실제 성공은 저장 commit 또는 생성 결과 확인 뒤에만 표시하며, 재시도에는 입력과 요청 ID를 보존한다. 403/404/409/422/429 및 실제 인증/DB 실패는 해당 연결 후 별도 통합 검증이 필요하다.
+
+### 화면 결과와 후속 확인
+
+- 데스크톱: 공통 데모 표시가 보이고 변화·인계·운영 화면에도 예시 데이터 설명이 있다. 운영 권한/등록은 준비 중이라고 표시한다.
+- 기록 화면: 이 브라우저에서 로딩 후 `아직 저장한 기록이 없습니다.` 표시를 확인했다. 저장 성공·다른 작성자와의 격리는 이번 점검에서 재시험하지 않았다. 코드상 조회 오류/재시도와 저장 실패 시 입력 보존은 있으나 실제 장애 주입은 미실시다.
+- **발견 사항 — 모바일 홈(390×844):** 사이드바의 예시 안내와 헤더의 데모 배지가 모두 숨겨져 샘플 이름·오늘 기록/인계 건수가 예시라는 표시 없이 보인다. `layout.tsx`의 `hidden ... lg:flex` / `hidden ... sm:inline`과 일치한다. 인계 화면의 자체 예시 문구는 이 크기에서도 보인다. 사용자는 팀이 전날 실제 휴대폰에서 정상 작동을 확인했다고 전달했다(이번 점검자가 직접 수행한 실기기 검증은 아님). 이는 기능 장애와 구분되는 낮은 우선순위의 안내 개선 제안이며, 즉시 수정이나 추가 휴대폰 검증을 #45 완료의 선행 조건으로 요구하지 않는다.
+- 데이터 출처 구분 권장: 공통 문구가 기록 화면의 실제 Supabase 저장까지 전부 예시로 오해하게 만들 수 있다. 예시 어르신/통계와 현재 브라우저 계정의 실제 저장 기록을 화면별로 구분한다.
+- #45 결과 댓글과 본 문서 변경을 F2가 검토한 뒤 완료 여부를 결정한다. 모바일 안내는 비긴급 개선 제안으로 기록하며 별도 즉시 수정 요청은 하지 않는다. 문서 변경의 최종 merge는 F1이 진행한다. 이 로컬 문서 준비만으로 게시·리뷰·merge·Issue 종료가 완료된 것은 아니다.
+- 원본 HTTP 점검 결과: [2026-11-18 배포 응답 기록](qa/b2-d1-2026-11-18-routes.json). 16개 결과의 일치는 현 구현의 접근·거절·미구현 상태를 확인한 것이며, 모든 기능의 구현 완료를 의미하지 않는다.
