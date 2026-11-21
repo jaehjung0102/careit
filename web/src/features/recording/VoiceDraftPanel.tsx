@@ -1,11 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { isCurrentRecognition, makeVoiceReviewState } from "./voiceRecordingState.mjs";
 
 type ReviewState = {
   required: boolean;
   approved: boolean;
+  busy: boolean;
 };
+
+type RecordingPhase = "idle" | "listening" | "stopping";
 
 type SpeechRecognitionAlternativeLike = {
   transcript: string;
@@ -80,7 +84,7 @@ export default function VoiceDraftPanel({
   onReviewChange,
 }: VoiceDraftPanelProps) {
   const [supported, setSupported] = useState<boolean | null>(null);
-  const [listening, setListening] = useState(false);
+  const [recordingPhase, setRecordingPhase] = useState<RecordingPhase>("idle");
   const [transcript, setTranscript] = useState("");
   const [draft, setDraft] = useState("");
   const [draftVersion, setDraftVersion] = useState<number | null>(null);
@@ -88,30 +92,42 @@ export default function VoiceDraftPanel({
   const [error, setError] = useState("");
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const transcriptBeforeRecording = useRef("");
+  const transcriptRef = useRef("");
+  const draftRef = useRef("");
 
   const stale = Boolean(draft) && draftVersion !== inputVersion;
   const approvalIsCurrent = approved && !stale;
+  const recordingBusy = recordingPhase !== "idle";
+  const listening = recordingPhase === "listening";
 
   useEffect(() => {
     const supportCheck = window.setTimeout(() => setSupported(Boolean(getSpeechRecognitionConstructor())), 0);
     return () => {
       window.clearTimeout(supportCheck);
-      recognitionRef.current?.abort();
+      const recognition = recognitionRef.current;
+      recognitionRef.current = null;
+      recognition?.abort();
     };
   }, []);
 
-  function markForReview() {
+  function publishReview(required: boolean, isApproved = false, busy = recordingBusy) {
+    onReviewChange(makeVoiceReviewState(required, isApproved, busy));
+  }
+
+  function markForReview(busy = recordingBusy) {
     setApproved(false);
-    onReviewChange({ required: true, approved: false });
+    publishReview(true, false, busy);
   }
 
   function replaceTranscript(value: string) {
+    transcriptRef.current = value;
     setTranscript(value);
+    draftRef.current = "";
     setDraft("");
     setDraftVersion(null);
     setError("");
-    if (value.trim()) markForReview();
-    else onReviewChange({ required: false, approved: false });
+    if (value.trim()) markForReview(false);
+    else publishReview(false, false, false);
   }
 
   function startRecording(replace = false) {
@@ -122,80 +138,103 @@ export default function VoiceDraftPanel({
       return;
     }
 
-    recognitionRef.current?.abort();
+    const previousRecognition = recognitionRef.current;
+    recognitionRef.current = null;
+    previousRecognition?.abort();
     const recognition = new Recognition();
     recognition.lang = "ko-KR";
     recognition.continuous = true;
     recognition.interimResults = true;
     transcriptBeforeRecording.current = replace ? "" : transcript.trim();
     if (replace) {
+      transcriptRef.current = "";
       setTranscript("");
+      draftRef.current = "";
       setDraft("");
       setDraftVersion(null);
       setApproved(false);
     }
 
     recognition.onresult = (event) => {
+      if (!isCurrentRecognition(recognitionRef.current, recognition)) return;
       const spoken = Array.from({ length: event.results.length }, (_, index) => event.results[index]?.[0]?.transcript ?? "")
         .join(" ")
         .replace(/\s+/g, " ")
         .trim();
       const nextTranscript = [transcriptBeforeRecording.current, spoken].filter(Boolean).join(" ");
+      transcriptRef.current = nextTranscript;
       setTranscript(nextTranscript);
+      draftRef.current = "";
       setDraft("");
       setDraftVersion(null);
-      markForReview();
+      markForReview(true);
     };
     recognition.onerror = (event) => {
+      if (!isCurrentRecognition(recognitionRef.current, recognition)) return;
       setError(speechErrorMessage(event.error));
-      setListening(false);
+      setRecordingPhase("stopping");
+      publishReview(Boolean(transcriptRef.current.trim() || draftRef.current.trim()), false, true);
     };
     recognition.onend = () => {
-      setListening(false);
+      if (!isCurrentRecognition(recognitionRef.current, recognition)) return;
       recognitionRef.current = null;
+      setRecordingPhase("idle");
+      publishReview(Boolean(transcriptRef.current.trim() || draftRef.current.trim()), false, false);
     };
 
     try {
-      recognition.start();
       recognitionRef.current = recognition;
-      setListening(true);
+      setRecordingPhase("listening");
       setError("");
-      markForReview();
+      setApproved(false);
+      publishReview(Boolean(transcriptRef.current.trim() || draftRef.current.trim()), false, true);
+      recognition.start();
     } catch {
-      setListening(false);
+      if (isCurrentRecognition(recognitionRef.current, recognition)) recognitionRef.current = null;
+      setRecordingPhase("idle");
       setError("녹음을 시작하지 못했습니다. 잠시 후 다시 시도해주세요.");
+      publishReview(Boolean(transcriptRef.current.trim() || draftRef.current.trim()), false, false);
     }
   }
 
   function stopRecording() {
-    recognitionRef.current?.stop();
-    setListening(false);
+    const recognition = recognitionRef.current;
+    if (!recognition || recordingPhase !== "listening") return;
+    setRecordingPhase("stopping");
+    publishReview(Boolean(transcriptRef.current.trim() || draftRef.current.trim()), false, true);
+    recognition.stop();
   }
 
   function createDraft() {
-    setDraft(makeExampleDraft(residentName, selectedSummary, transcript));
+    if (recordingBusy) return;
+    const nextDraft = makeExampleDraft(residentName, selectedSummary, transcript);
+    draftRef.current = nextDraft;
+    setDraft(nextDraft);
     setDraftVersion(inputVersion);
     setApproved(false);
     setError("");
-    onReviewChange({ required: true, approved: false });
+    publishReview(true, false, false);
   }
 
   function approveDraft() {
-    if (!draft.trim() || stale) return;
+    if (recordingBusy || !draft.trim() || stale) return;
     setApproved(true);
-    onReviewChange({ required: true, approved: true });
+    publishReview(true, true, false);
   }
 
   function resetVoiceDraft() {
-    recognitionRef.current?.abort();
+    const recognition = recognitionRef.current;
     recognitionRef.current = null;
-    setListening(false);
+    recognition?.abort();
+    setRecordingPhase("idle");
+    transcriptRef.current = "";
     setTranscript("");
+    draftRef.current = "";
     setDraft("");
     setDraftVersion(null);
     setApproved(false);
     setError("");
-    onReviewChange({ required: false, approved: false });
+    publishReview(false, false, false);
   }
 
   return <section className="mt-8 rounded-2xl border border-teal-100 bg-teal-50/50 p-5" aria-labelledby="voice-draft-title">
@@ -208,11 +247,11 @@ export default function VoiceDraftPanel({
     </div>
 
     <div className="mt-5 flex flex-wrap gap-2">
-      <button type="button" onClick={listening ? stopRecording : () => startRecording()} disabled={disabled} className={listening ? "button-primary" : "button-outline"}>
-        {listening ? "■ 녹음 중지" : transcript ? "● 이어서 녹음" : "● 음성 녹음 시작"}
+      <button type="button" onClick={listening ? stopRecording : () => startRecording()} disabled={disabled || recordingPhase === "stopping"} className={listening ? "button-primary" : "button-outline"}>
+        {listening ? "■ 녹음 중지" : recordingPhase === "stopping" ? "녹음 종료 중…" : transcript ? "● 이어서 녹음" : "● 음성 녹음 시작"}
       </button>
-      {transcript && !listening && <button type="button" onClick={() => startRecording(true)} disabled={disabled} className="button-outline">다시 녹음</button>}
-      {(transcript || draft) && <button type="button" onClick={resetVoiceDraft} disabled={disabled} className="button-outline">음성·초안 초기화</button>}
+      {transcript && !recordingBusy && <button type="button" onClick={() => startRecording(true)} disabled={disabled} className="button-outline">다시 녹음</button>}
+      {(transcript || draft || error || recordingBusy) && <button type="button" onClick={resetVoiceDraft} disabled={disabled} className="button-outline">음성·초안 초기화</button>}
     </div>
     {supported === false && <p className="mt-3 text-xs leading-5 text-amber-800">현재 브라우저에서는 음성 변환을 지원하지 않습니다. 직접 입력은 계속 사용할 수 있습니다.</p>}
 
@@ -220,7 +259,7 @@ export default function VoiceDraftPanel({
       <textarea
         id="voice-transcript"
         value={transcript}
-        disabled={disabled || listening}
+        disabled={disabled || recordingBusy}
         onChange={(event) => replaceTranscript(event.target.value)}
         placeholder="음성 결과가 여기에 표시됩니다. 지원하지 않는 브라우저에서는 직접 입력해주세요."
         className="mt-2 min-h-28 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm font-normal leading-6 text-slate-800 disabled:opacity-60"
@@ -228,7 +267,7 @@ export default function VoiceDraftPanel({
     </label>
     <p className="mt-2 text-xs text-slate-500">숫자·단위·부정 표현을 반드시 원래 관찰과 대조해주세요. 음성 오류가 있어도 버튼 선택과 작성 중인 문장은 유지됩니다.</p>
 
-    <button type="button" onClick={createDraft} disabled={disabled || (!transcript.trim() && !selectedSummary)} className="button-outline mt-4 disabled:cursor-not-allowed disabled:opacity-40">
+    <button type="button" onClick={createDraft} disabled={disabled || recordingBusy || (!transcript.trim() && !selectedSummary)} className="button-outline mt-4 disabled:cursor-not-allowed disabled:opacity-40">
       AI 초안 예시 만들기
     </button>
 
@@ -240,15 +279,16 @@ export default function VoiceDraftPanel({
       <textarea
         id="voice-draft"
         value={draft}
-        disabled={disabled}
+        disabled={disabled || recordingBusy}
         onChange={(event) => {
+          draftRef.current = event.target.value;
           setDraft(event.target.value);
           setApproved(false);
-          onReviewChange({ required: true, approved: false });
+          publishReview(true, false, false);
         }}
         className="mt-2 min-h-32 w-full rounded-xl border border-slate-200 p-3 text-sm font-normal leading-6 text-slate-800 disabled:opacity-60"
       />
-      <button type="button" onClick={approveDraft} disabled={disabled || stale || !draft.trim() || approvalIsCurrent} className="button-primary mt-3 disabled:cursor-not-allowed disabled:opacity-40">
+      <button type="button" onClick={approveDraft} disabled={disabled || recordingBusy || stale || !draft.trim() || approvalIsCurrent} className="button-primary mt-3 disabled:cursor-not-allowed disabled:opacity-40">
         {approvalIsCurrent ? "초안 확인 완료" : "수정한 초안 확인"}
       </button>
     </div>}

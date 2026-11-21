@@ -7,6 +7,7 @@ import { SectionTitle } from "@/components/ui";
 import { listObservations, saveObservation, type Observation, type ObservationInput } from "@/lib/db/observations";
 import { observationFieldCount, observationFields, observationGroups, type ObservationFieldId } from "./observationFields";
 import VoiceDraftPanel from "./VoiceDraftPanel";
+import { isVoiceReviewComplete } from "./voiceRecordingState.mjs";
 
 type Answers = Partial<Record<ObservationFieldId, string>>;
 
@@ -27,13 +28,13 @@ function ObservationInputs({ initialId }: { initialId: string }) {
   const [loading, setLoading] = useState(true);
   const [inputVersion, setInputVersion] = useState(0);
   const [voiceResetToken, setVoiceResetToken] = useState(0);
-  const [voiceReview, setVoiceReview] = useState({ required: false, approved: false });
+  const [voiceReview, setVoiceReview] = useState({ required: false, approved: false, busy: false });
   const requestId = useRef<string | null>(null);
   const inFlight = useRef(false);
   const resident = residents.find((item) => item.id === residentId);
   const selectedCount = observationFields.filter((field) => answers[field.id]).length;
   const complete = selectedCount === observationFieldCount;
-  const voiceReviewComplete = !voiceReview.required || voiceReview.approved;
+  const voiceReviewComplete = isVoiceReviewComplete(voiceReview);
   const selectedSummary = observationFields
     .filter((field) => answers[field.id])
     .map((field) => `${field.title} ${answers[field.id]}`)
@@ -70,12 +71,12 @@ function ObservationInputs({ initialId }: { initialId: string }) {
     setMessage("");
     requestId.current = null;
     setInputVersion((previous) => previous + 1);
-    setVoiceReview((previous) => previous.required ? { required: true, approved: false } : previous);
+    setVoiceReview((previous) => previous.required ? { ...previous, approved: false } : previous);
   }
 
   function resetVoiceReview() {
     setVoiceResetToken((previous) => previous + 1);
-    setVoiceReview({ required: false, approved: false });
+    setVoiceReview({ required: false, approved: false, busy: false });
   }
 
   function choose(fieldId: ObservationFieldId, option: string) {
@@ -163,6 +164,7 @@ function ObservationInputs({ initialId }: { initialId: string }) {
       </section>
       <label className="mt-5 flex items-center gap-3 text-sm text-slate-700"><input type="checkbox" checked={confirmed} disabled={!complete || saving} onChange={(event) => setConfirmed(event.target.checked)} className="h-5 w-5 accent-teal-600" />어르신과 {observationFieldCount}개 관찰 내용을 확인했습니다.</label>
       {voiceReview.required && !voiceReview.approved && <p className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900">음성·AI 초안을 사용했습니다. 수정한 초안을 확인해야 기록을 저장할 수 있습니다.</p>}
+      {voiceReview.busy && <p className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900">음성 녹음을 종료하는 중입니다. 변환이 끝난 뒤 초안을 확인해주세요.</p>}
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3"><button type="button" disabled={!selectedCount || saving} onClick={() => { setAnswers({}); resetVoiceReview(); invalidate(); }} className="button-outline disabled:cursor-not-allowed disabled:opacity-40">선택 초기화</button><button type="button" disabled={!resident || !complete || !confirmed || !voiceReviewComplete || saving} onClick={save} className="button-primary disabled:cursor-not-allowed disabled:opacity-40">{saving ? "저장 중…" : "기록 저장"}</button></div>
       {message && <p role="status" className="mt-4 rounded-xl bg-slate-50 p-4 text-sm">{message}</p>}
     </section>
