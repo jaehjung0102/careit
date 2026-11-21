@@ -73,7 +73,9 @@ psql "$DEV_DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/team_resident_foun
 
 #19의 수정 이력·중복 저장 강화, #44의 실제 Production RLS 검증은 별도 범위다.
 
-## 2026-11-19 로컬 검증 결과
+## 검증 결과와 범위
+
+### 자동 검증 — 2026-11-19
 
 - `cd web && npm ci`, `npm run lint`, `npm run build`: 성공.
 - 일회용 PGlite PostgreSQL에서 기존 두 migration → 기존 가상 관찰 저장 → 새 migration:
@@ -81,6 +83,27 @@ psql "$DEV_DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/team_resident_foun
 - seed 두 번 적용: 세 어르신만 유지. SQL 회귀 검사: 같은 팀 조회, 다른 팀 차단,
   미소속·익명 차단, 자기 소속 등록·승격·어르신 생성 거부, 기존 관찰 작성자 위조 차단,
   작성자 격리 및 테스트 rollback 성공.
-- PGlite 테스트의 auth.users·auth.uid()·auth.jwt()는 Supabase를 흉내 낸 fixture다.
-  실제 Supabase Auth/JWT 발급, 브라우저 저장·재조회, Production 배포는 검증하지 않았다.
-  #44의 실제 환경 검증과 지정 리뷰·merge 전에는 Issue 완료로 간주하지 않는다.
+- PGlite의 `auth.users`·`auth.uid()`·`auth.jwt()`는 Supabase 동작을 재현한 테스트
+  fixture다. 이 결과만으로 실제 Supabase Auth/JWT 또는 브라우저 동작을 검증했다고
+  해석하지 않는다.
+
+### 사용자 직접 로컬 검증 보고 — 2026-11-20
+
+- 최초 확인 과정에서 Docker daemon 중지와 환경변수 파일 위치 문제로 브라우저 저장이
+  실패했다. Docker와 로컬 Supabase를 다시 실행하고 환경변수를 `web/.env.local`에
+  배치한 뒤 처음부터 다시 확인했다.
+- 사용자는 로컬 Supabase에서 migration·seed 적용 후 `teams` 1건과 `residents` 3건을
+  확인하고 제공된 SQL 권한 검사를 실행했으며, 오류가 없었다고 보고했다.
+- 사용자는 로컬 앱에서 가상 관찰 저장, 새로고침 후 재조회, 시크릿 창에서 기존 익명
+  기록이 보이지 않는 것을 직접 확인했다고 보고했다.
+- 위 브라우저 결과는 사용자의 직접 보고이며 PR 작성자나 리뷰 자동화가 같은 화면을
+  독립적으로 재현·관찰한 결과는 아니다. 초기 실패 보고를 성공 근거로 사용하지 않는다.
+
+### 아직 검증하지 않은 범위
+
+- 팀이 함께 사용하는 hosted Supabase 및 Production DB에 이 migration을 적용하지 않았다.
+- Vercel Production의 저장·새로고침·다른 세션 격리와 실제 RLS 결과는 검증하지 않았다.
+- 모바일 실기기에서 저장·조회·권한 동작을 검증하지 않았다.
+- 따라서 로컬 사용자 보고를 Production 완료로 확대 해석하지 않는다. Production 검증은
+  #44, 배포·복구 절차는 #24에서 별도로 수행한다. 지정 리뷰와 최종 merge 전에는 #17을
+  완료로 간주하지 않는다.
