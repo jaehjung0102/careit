@@ -1,0 +1,40 @@
+{
+  "date": "2026-11-21",
+  "timezone": "Asia/Seoul",
+  "test_kind": "One human microphone recording of an assigned fictional Korean care note",
+  "browser": "Chrome on Mac",
+  "assigned_script": "점심은 오십 퍼센트 드셨고, 물은 백오십 밀리리터 드셨습니다. 보행 시 휘청거림은 없었습니다.",
+  "raw_transcript": "점심은 50% 더 되셨고 물은 150ml 더 되셨습니다. 보행 시 휘정 거림은 없었습니다.",
+  "audio_seconds": 14.16,
+  "local_processing_seconds": 1.49,
+  "timing_scope": "Audio duration and displayed local processing time only; excludes user review/correction and final submission. No final care record was saved.",
+  "checks": [
+    {
+      "fact": "Lunch amount 50%",
+      "numeric_value": "preserved",
+      "limitation": "Eating verb misrecognized as 더 되셨고; do not classify the whole statement as error-free."
+    },
+    {
+      "fact": "Water intake 150 mL",
+      "numeric_value_and_unit": "preserved",
+      "limitation": "Intake verb misrecognized as 더 되셨습니다; single event, not daily total."
+    },
+    {
+      "fact": "No staggering while walking",
+      "negation": "preserved as 없었습니다",
+      "term": "휘청거림 misspelled as 휘정 거림; correction needed."
+    }
+  ],
+  "assessment": "Recording-to-transcript flow worked on this Mac. Manual correction is required. One prompted recording does not establish general accuracy or mobile/production readiness.",
+  "corrected_target": "점심은 50% 드셨고, 물은 150mL 드셨습니다. 보행 시 휘청거림은 없었습니다.",
+  "observed_corrected_transcript": "점심은 50% 드셨고, 물은 150mL 드셨습니다. 보행 시 휘청거림은 없었습니다.",
+  "manual_correction_status": "User manually corrected the text. Assistant directly verified the visible textarea matches the corrected target on 2026-11-21.",
+  "correction_method": "User was given the corrected reference text; this was an editability demonstration, not an independent usability accuracy test.",
+  "correction_time_seconds": null,
+  "cause_of_recognition_errors": "Undetermined; this single observation cannot attribute errors to pronunciation, microphone conditions or recognition model.",
+  "production_integration": false,
+  "mobile_voice_tested": false,
+  "evidence_source": "User performed recording/correction; assistant directly observed the microphone result and corrected textarea in Chrome.",
+  "data_source": "fictional scripted observation; one person, one recording",
+  "audio_included": false
+}
