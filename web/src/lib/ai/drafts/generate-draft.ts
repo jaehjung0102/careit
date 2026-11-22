@@ -60,9 +60,9 @@ async function callWithDeadline(provider: DraftProvider, request: DraftProviderR
   }
 }
 
-// Internal service only. No live provider or public HTTP route is installed here.
-// A future route must authenticate before exposing validation and map exceptions
-// to the shared error envelope without returning raw provider/server errors.
+// Internal service. The HTTP handler authenticates before exposing validation
+// and maps errors to the shared envelope. Its app route has no live dependencies
+// yet; real provider/auth/access integration is still required.
 export async function generateDraft(value: unknown, dependencies?: DraftGenerationDependencies): Promise<DraftGenerationResult> {
   const preview = previewTemplateDraft(value, dependencies?.now?.() ?? new Date());
   if (typeof dependencies?.authorizeResident !== "function" || typeof dependencies.provider?.generate !== "function") {
