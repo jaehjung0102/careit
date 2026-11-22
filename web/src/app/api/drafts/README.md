@@ -42,6 +42,8 @@
 
 남은 연결: 팀 공급자/모델/서버 설정 확인 → B1 인증·대상 권한 어댑터 → 실제 공급자·HTTP 성공/실패 검증 → F1 원문/revision/재확인 및 B1 저장 연결 → 교차 리뷰·F1 merge·배포 확인.
 
+F1이 사용할 B2 client/review helper는 `web/src/lib/ai/drafts/client-request.ts`와 `review-state.ts`에 준비했다. 같은 사이트 POST, 오류 표시, 입력 보존, 수정 후 재확인과 지연 응답 폐기를 다루며 아직 실제 화면에는 연결하지 않았다. 연결 순서와 역할 경계는 해당 폴더 README에 있다.
+
 `web/`에서 기존 TypeScript/Node 도구로 두 계층을 함께 검사한다.
 
 ```sh

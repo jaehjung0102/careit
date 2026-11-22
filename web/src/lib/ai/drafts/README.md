@@ -62,13 +62,34 @@
 
 서버에서 인증된 문맥을 사용하여 `authorizeResident`를 구현해야 한다. 테스트의 빈 접근 콜백이나 가짜 공급자를 앱에 사용하지 않는다. HTTP factory는 입력 검증 결과를 노출하기 전에 인증하고 예외를 공통 오류 형식으로 변환한다. 실제 인증 어댑터는 미연결이다. 모듈은 저장하지 않으며 실제 사용자 확인도 대신하지 않는다.
 
+## F1 화면 연결을 위한 요청·검토 helper
+
+`client-request.ts`와 `review-state.ts`는 **아직 화면에서 사용하지 않는** B2 준비 코드다. F1 PR #56의 컴포넌트나 B1 저장 코드는 수정하지 않았다. 브라우저에서 실행 가능한 순수 함수이며 서버 구현은 type으로만 참조한다. 원문·토큰·확인 상태를 localStorage에 저장하지 않는다.
+
+- `requestDraft(input, accessToken, { signal })`: 같은 사이트의 `/api/drafts`에 고정된 POST를 보낸다. 입력은 복사하고 서버 응답의 대상/revision/계약 버전/생성 방식/확인 필수 표시를 검사한다. 리다이렉트를 거절하며 원시 오류 메시지나 토큰을 표시하지 않는다. 실패할 때 브라우저가 임의로 템플릿을 만들지 않는다.
+- `createDraftReview(input)`: 아직 확인되지 않은 입력 상태를 만든다. 완성된 계약 형태를 사용하되 실제 값 검증은 서버가 수행한다. 날짜/정량 정보/미관찰 null을 기존 화면 값으로부터 임의 추정하지 않는다.
+- `replaceDraftObservation(state, observation)`: 대상·시각·17개 선택값·수분·보행·원문 변경 시 **반드시** 호출한다. revision을 올리고 초안·확인·진행 중 요청을 무효화한다. 화면 밖에서 state 객체를 직접 수정하거나 revision을 재사용하지 않는다.
+- `beginDraftRequest(state)`: 별도 요청표(ticket)와 입력 복사본을 만든다. 같은 revision에서 재시도해도 요청표가 달라 이전 응답이 최신 결과를 덮을 수 없다.
+- `receiveDraft(currentState, request, response)` / `failDraftRequest(currentState, request, error)`: **await 이전의 오래된 state가 아니라 현재 state**에 적용한다. 요청표가 다르면 성공·실패 모두 무시한다. 실패 후에도 입력은 유지된다.
+- `confirmDraft(state)`: 사람의 확인 클릭에서만 호출한다. 생성 중/실패/편집 상태에서는 확인하지 않는다. `getConfirmedDraftSnapshot(state)`는 확인된 동일 revision의 입력과 문장만 복사해서 제공한다.
+
+F1 연결 순서:
+
+1. 실제 관찰 DTO와 사용자 확인된 음성 원문을 하나의 상태로 관리한다. 원문만 바뀌어도 revision이 증가해야 한다. 현재 PR #56의 `selectedSummary`/이름/검토 flags만으로는 전체 DTO나 승인 snapshot을 전달할 수 없으므로 prop/callback을 F1과 맞춘다.
+2. 녹음 시작 시 기존 확인을 무효화하고, 녹음/종료 처리 중에는 생성·확인·저장을 막는다. 마지막 음성 결과가 확정된 뒤 원문 변경을 반영한다. 이 helper는 마이크 상태를 관리하지 않는다.
+3. 생성 클릭에서 `beginDraftRequest` 후 해당 복사본으로 `requestDraft`를 실행한다. AbortController는 화면이 소유하며 새 요청·입력 변경·초기화·화면 종료 시 이전 요청을 취소한다. ticket 검사도 계속 사용하여 취소를 무시한 응답을 버린다.
+4. 응답은 최신 상태에 반영하고 원본과 초안을 함께 일반 텍스트로 표시한다. 템플릿도 `generation_mode`/`fallback_reason`에 맞게 표시하고 다시 확인받는다. 본문 직접 수정은 기본 계약에 없으므로 입력 수정→재생성→재확인으로 연결하거나 변경을 먼저 합의한다.
+5. 저장 클릭 시 **그 시점의** `getConfirmedDraftSnapshot` 결과를 사용한다. 과거 snapshot을 따로 보관해 재사용하지 않는다. 이 객체는 인증된 저장이나 서버 확인 증명이 아니다. B1은 권한·입력·revision을 검증하고 실제 저장 성공 후에만 완료로 표시한다. 기존 평평한 `saveObservation()`에 이 객체를 그대로 넣거나 확인자/확인 시각을 클라이언트가 만들어 보내지 않는다.
+
+성공 응답 검사도 모델 사실 검증이나 원문 정확성 확인을 대신하지 않는다. 아직 실제 React 화면·마이크·Supabase 저장에 연결하지 않았으므로 테스트 성공을 사용자 흐름 완료로 간주하지 않는다. 전체 HTTP/네트워크 대기와 취소 UI는 F1 연결 때 검증하며, 서버의 10초 제한은 공급자 호출에만 적용된다.
+
 ## 연결 전에 남은 작업
 
 1. [#27 공급자 확인 질문](https://github.com/jaehjung0102/careit/issues/27#issuecomment-7059058399)에 따라 팀의 문장 생성·음성 서비스와 설정 방법을 확인한다. 개인 계정이나 다른 프로젝트의 키를 대체 사용하지 않는다.
 2. 내부 어댑터 구조에 맞는 실제 공급자를 연결하고 JSON 파싱, 모델 응답, 취소 신호, 품질을 검증한다. 지원하지 않는 표현의 모순은 이 검사로 찾지 못하므로 원본·선택값·초안의 사람 검토를 유지한다.
 3. B1과 서버 인증/대상 접근 검증을 연결하고, 설정 미준비는 503으로 처리한다. 템플릿으로 권한 오류를 숨기지 않는다.
 4. `/api/drafts`의 준비된 HTTP factory에 실제 의존 서비스를 연결한다. 가짜 서비스를 사용한 요청/응답 시험은 통과했지만 실제 토큰·모델을 사용한 HTTP 성공 검증은 아직 남아 있다. 연결 경계는 `web/src/app/api/drafts/README.md`를 참고한다.
-5. F1 #3과 원문 확인→초안 검토→입력 수정 시 revision 증가/재확인 흐름을 연결한다. 화면에서는 원문·초안을 HTML 또는 Markdown으로 실행하지 않고 일반 텍스트로 표시한다. 실패 시 입력을 유지하고 늦은 이전 revision 응답을 버린다.
+5. 준비된 client/review helper를 F1 #3과 연결한다. 원문 확인→초안 검토→입력 수정 시 revision 증가/재확인, 입력 보존, 늦은 응답 무시는 함수 수준에서 검증했으며 화면에서 별도 확인해야 한다.
 6. 음성 파일 형식·상한·브라우저/기기·실패 흐름을 확정하고, 실제 저장 경로까지 별도로 검증한다.
 
 ## 로컬 검증
@@ -77,8 +98,8 @@
 
 ```sh
 build_dir=$(mktemp -d)
-node node_modules/typescript/bin/tsc --strict --skipLibCheck --target ES2022 --module commonjs --moduleResolution node --esModuleInterop --outDir "$build_dir" src/lib/ai/drafts/_tests/*.ts
-node --test "$build_dir/_tests/"*.test.js
+node node_modules/typescript/bin/tsc --strict --skipLibCheck --target ES2022 --module commonjs --moduleResolution node --esModuleInterop --rootDir src --outDir "$build_dir" src/lib/ai/drafts/_tests/*.ts src/app/api/drafts/_tests/*.ts
+node --test "$build_dir/lib/ai/drafts/_tests/"*.test.js "$build_dir/app/api/drafts/_tests/"*.test.js
 ```
 
-이 테스트는 가상의 입력과 가짜 공급자에 대한 내부 함수 검증이다. 변경/누락/추가 사실, 원문 보존, 동시 revision, 시간 초과·늦은 응답·공급자 실패와 권한 오류 분리를 검사한다. 서비스 모델의 품질, 실제 마이크, 인증/RLS, UI 입력 보존, Production 동작 또는 전체 업무 시간은 검증하지 않는다.
+이 테스트는 가상의 입력과 가짜 공급자에 대한 내부 함수 검증이다. 변경/누락/추가 사실, 원문 보존, 동시 revision, 시간 초과·늦은 응답·공급자 실패와 권한 오류 분리, 클라이언트 요청 및 검토 상태 전이를 검사한다. 서비스 모델의 품질, 실제 마이크, 인증/RLS, 실제 화면 입력 보존, Production 동작 또는 전체 업무 시간은 검증하지 않는다.
