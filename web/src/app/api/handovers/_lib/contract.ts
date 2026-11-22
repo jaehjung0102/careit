@@ -1,4 +1,5 @@
-// Provisional B2-01 draft-3 contract (PR #40); keep changes inside B2's area.
+// B2-01 directions agreed in issue #25 (2026-11-20); adapter integration is separate.
+// Keep the existing wire-version label for compatibility with PR #41 clients.
 export const CONTRACT_VERSION = "b2-01-draft-3";
 
 export const CATEGORIES = [
