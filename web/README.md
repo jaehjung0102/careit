@@ -31,6 +31,15 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Connect `jaehjung0102/careit` to Vercel and set the Root Directory to `web`.
+
+Add these variables to Preview and Production. Copy their values from the shared development Supabase project; never add a `service_role` key or database password.
+
+```text
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+```
+
+Deploy `main` to Production. Pull requests may use Preview deployments, but the shared mobile QA URL must always point to the Production deployment from `main`.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

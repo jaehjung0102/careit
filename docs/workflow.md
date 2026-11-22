@@ -6,3 +6,4 @@
 4. PR 본문에 Issue 링크, 변경 사항, mock/실제 데이터 여부, 검증 결과, 리뷰 요청을 적는다. 자세한 예시는 [개발 계획](development-plan.md#pr-본문-작성-규칙)을 따른다.
 5. 수요일·일요일 마감까지 **프론트엔드↔백엔드 교차 리뷰와 수정·승인**을 마친다. F1↔B1, F2↔B2가 지정된 리뷰 짝이다.
 6. 정재헌이 승인된 PR을 `main`에 최종 merge하고 실행을 확인한 뒤 Issue를 닫는다.
+7. 각 PR의 Preview 배포에서 먼저 확인하고, `main` merge 후 Production URL에서 모바일·저장·오류 흐름을 다시 확인한다. 배포 환경에는 공개 가능한 Supabase URL과 publishable key만 넣는다.
