@@ -6,6 +6,8 @@ import { residents } from "@/lib/mock/dashboard";
 import { SectionTitle } from "@/components/ui";
 import { listObservations, saveObservation, type Observation, type ObservationInput } from "@/lib/db/observations";
 import { observationFieldCount, observationFields, observationGroups, type ObservationFieldId } from "./observationFields";
+import VoiceDraftPanel from "./VoiceDraftPanel";
+import { isVoiceReviewComplete } from "./voiceRecordingState.mjs";
 
 type Answers = Partial<Record<ObservationFieldId, string>>;
 
@@ -24,11 +26,19 @@ function ObservationInputs({ initialId }: { initialId: string }) {
   const [records, setRecords] = useState<Observation[]>([]);
   const [loadError, setLoadError] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [inputVersion, setInputVersion] = useState(0);
+  const [voiceResetToken, setVoiceResetToken] = useState(0);
+  const [voiceReview, setVoiceReview] = useState({ required: false, approved: false, busy: false });
   const requestId = useRef<string | null>(null);
   const inFlight = useRef(false);
   const resident = residents.find((item) => item.id === residentId);
   const selectedCount = observationFields.filter((field) => answers[field.id]).length;
   const complete = selectedCount === observationFieldCount;
+  const voiceReviewComplete = isVoiceReviewComplete(voiceReview);
+  const selectedSummary = observationFields
+    .filter((field) => answers[field.id])
+    .map((field) => `${field.title} ${answers[field.id]}`)
+    .join(", ");
 
   async function reload() {
     setLoading(true);
@@ -60,6 +70,13 @@ function ObservationInputs({ initialId }: { initialId: string }) {
     setConfirmed(false);
     setMessage("");
     requestId.current = null;
+    setInputVersion((previous) => previous + 1);
+    setVoiceReview((previous) => previous.required ? { ...previous, approved: false } : previous);
+  }
+
+  function resetVoiceReview() {
+    setVoiceResetToken((previous) => previous + 1);
+    setVoiceReview({ required: false, approved: false, busy: false });
   }
 
   function choose(fieldId: ObservationFieldId, option: string) {
@@ -68,7 +85,7 @@ function ObservationInputs({ initialId }: { initialId: string }) {
   }
 
   async function save() {
-    if (!resident || !complete || !confirmed || inFlight.current) return;
+    if (!resident || !complete || !confirmed || !voiceReviewComplete || inFlight.current) return;
     inFlight.current = true;
     setSaving(true);
     setMessage("");
@@ -81,6 +98,8 @@ function ObservationInputs({ initialId }: { initialId: string }) {
       setMessage("Supabase에 관찰 기록을 저장했습니다.");
       setAnswers({});
       setConfirmed(false);
+      setInputVersion((previous) => previous + 1);
+      resetVoiceReview();
       requestId.current = null;
     } catch {
       setMessage("저장하지 못했습니다. 확장 데이터베이스 변경이 적용되었는지 확인한 뒤 다시 시도해주세요. 선택한 내용은 유지됩니다.");
@@ -97,7 +116,7 @@ function ObservationInputs({ initialId }: { initialId: string }) {
         이 화면은 장기요양 기록 항목을 참고한 관찰 도구입니다. 진단이 필요한 급격한 변화나 응급상황은 기록만 남기지 말고 즉시 담당자에게 보고하세요.
       </p>
       <label className="mt-6 block text-sm font-semibold text-slate-700">어르신
-        <select disabled={saving} value={residentId} onChange={(event) => { setResidentId(event.target.value); setAnswers({}); invalidate(); }} className="mt-2 min-h-12 w-full rounded-xl border border-slate-200 bg-white px-3 font-normal">
+        <select disabled={saving} value={residentId} onChange={(event) => { setResidentId(event.target.value); setAnswers({}); resetVoiceReview(); invalidate(); }} className="mt-2 min-h-12 w-full rounded-xl border border-slate-200 bg-white px-3 font-normal">
           <option value="" disabled>어르신을 선택하세요</option>
           {residents.map((item) => <option key={item.id} value={item.id}>{item.name} · {item.room}</option>)}
         </select>
@@ -125,6 +144,15 @@ function ObservationInputs({ initialId }: { initialId: string }) {
         </section>)}
       </div>
 
+      <VoiceDraftPanel
+        key={voiceResetToken}
+        disabled={!resident || saving}
+        inputVersion={inputVersion}
+        residentName={resident?.name}
+        selectedSummary={selectedSummary}
+        onReviewChange={setVoiceReview}
+      />
+
       <section aria-live="polite" aria-atomic="true" className="mt-8 rounded-2xl bg-slate-50 p-5">
         <div className="flex items-center justify-between gap-3"><h3 className="text-sm font-bold text-slate-900">기록 초안</h3><span className="text-xs text-teal-700">{selectedCount} / {observationFieldCount} 항목 선택</span></div>
         {!resident ? <p className="mt-3 text-sm text-slate-500">먼저 어르신을 선택해주세요.</p> : <>
@@ -135,7 +163,9 @@ function ObservationInputs({ initialId }: { initialId: string }) {
         </>}
       </section>
       <label className="mt-5 flex items-center gap-3 text-sm text-slate-700"><input type="checkbox" checked={confirmed} disabled={!complete || saving} onChange={(event) => setConfirmed(event.target.checked)} className="h-5 w-5 accent-teal-600" />어르신과 {observationFieldCount}개 관찰 내용을 확인했습니다.</label>
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3"><button type="button" disabled={!selectedCount || saving} onClick={() => { setAnswers({}); invalidate(); }} className="button-outline disabled:cursor-not-allowed disabled:opacity-40">선택 초기화</button><button type="button" disabled={!resident || !complete || !confirmed || saving} onClick={save} className="button-primary disabled:cursor-not-allowed disabled:opacity-40">{saving ? "저장 중…" : "기록 저장"}</button></div>
+      {voiceReview.required && !voiceReview.approved && <p className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900">음성·AI 초안을 사용했습니다. 수정한 초안을 확인해야 기록을 저장할 수 있습니다.</p>}
+      {voiceReview.busy && <p className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900">음성 녹음을 종료하는 중입니다. 변환이 끝난 뒤 초안을 확인해주세요.</p>}
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3"><button type="button" disabled={!selectedCount || saving} onClick={() => { setAnswers({}); resetVoiceReview(); invalidate(); }} className="button-outline disabled:cursor-not-allowed disabled:opacity-40">선택 초기화</button><button type="button" disabled={!resident || !complete || !confirmed || !voiceReviewComplete || saving} onClick={save} className="button-primary disabled:cursor-not-allowed disabled:opacity-40">{saving ? "저장 중…" : "기록 저장"}</button></div>
       {message && <p role="status" className="mt-4 rounded-xl bg-slate-50 p-4 text-sm">{message}</p>}
     </section>
 
