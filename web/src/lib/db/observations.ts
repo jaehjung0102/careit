@@ -23,6 +23,7 @@ export type Observation = {
   created_at: string;
 };
 export type ObservationInput = {
+  team_id?: string;
   id: string;
   resident_id: string;
   meal_period: string;
@@ -61,11 +62,11 @@ async function ready() {
   await authentication;
   return createClient();
 }
-export async function listObservations() {
+export async function listObservations(teamId?: string) {
   const client = await ready();
-  const { data, error } = await client.from("observations")
-    .select(columns)
-    .order("created_at", { ascending: false }).limit(30);
+  const query = client.from("observations").select(columns);
+  const scoped = teamId ? query.eq("team_id", teamId) : query.is("team_id", null);
+  const { data, error } = await scoped.order("created_at", { ascending: false }).limit(30);
   if (error) throw error;
   return data as Observation[];
 }

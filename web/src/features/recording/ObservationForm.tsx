@@ -2,20 +2,23 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { residents } from "@/lib/mock/dashboard";
+import { residents as demoResidents } from "@/lib/mock/dashboard";
 import { SectionTitle } from "@/components/ui";
 import { listObservations, saveObservation, type Observation, type ObservationInput } from "@/lib/db/observations";
 import { observationFieldCount, observationFields, observationGroups, type ObservationFieldId } from "./observationFields";
 
 type Answers = Partial<Record<ObservationFieldId, string>>;
 
-export default function ObservationForm() {
+type ResidentOption = { id: string; name: string; room: string; team_id?: string };
+type Props = { residents?: ResidentOption[]; teamId?: string };
+
+export default function ObservationForm({ residents = demoResidents, teamId }: Props) {
   const params = useSearchParams();
   const initialId = params.get("resident") ?? "";
-  return <ObservationInputs key={initialId} initialId={initialId} />;
+  return <ObservationInputs key={`${teamId ?? "private"}:${initialId}`} initialId={initialId} residents={residents} teamId={teamId} />;
 }
 
-function ObservationInputs({ initialId }: { initialId: string }) {
+function ObservationInputs({ initialId, residents, teamId }: Props & { initialId: string; residents: ResidentOption[] }) {
   const [residentId, setResidentId] = useState(residents.some((resident) => resident.id === initialId) ? initialId : "");
   const [answers, setAnswers] = useState<Answers>({});
   const [confirmed, setConfirmed] = useState(false);
@@ -34,7 +37,7 @@ function ObservationInputs({ initialId }: { initialId: string }) {
     setLoading(true);
     setLoadError(false);
     try {
-      setRecords(await listObservations());
+      setRecords(await listObservations(teamId));
     } catch {
       setLoadError(true);
     } finally {
@@ -44,7 +47,7 @@ function ObservationInputs({ initialId }: { initialId: string }) {
 
   useEffect(() => {
     let active = true;
-    listObservations()
+    listObservations(teamId)
       .then((data) => {
         if (active) {
           setRecords((previous) => [...new Map([...data, ...previous].map((item) => [item.id, item])).values()]
@@ -54,7 +57,7 @@ function ObservationInputs({ initialId }: { initialId: string }) {
       .catch(() => { if (active) setLoadError(true); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, []);
+  }, [teamId]);
 
   function invalidate() {
     setConfirmed(false);
@@ -74,7 +77,7 @@ function ObservationInputs({ initialId }: { initialId: string }) {
     setMessage("");
     requestId.current ??= crypto.randomUUID();
     const values = Object.fromEntries(observationFields.map((field) => [field.id, answers[field.id]!])) as Record<ObservationFieldId, string>;
-    const input: ObservationInput = { id: requestId.current, resident_id: residentId, ...values };
+    const input: ObservationInput = { id: requestId.current, resident_id: residentId, ...values, ...(teamId ? { team_id: teamId } : {}) };
     try {
       const record = await saveObservation(input);
       setRecords((previous) => [record, ...previous.filter((item) => item.id !== record.id)].slice(0, 30));
@@ -140,7 +143,7 @@ function ObservationInputs({ initialId }: { initialId: string }) {
     </section>
 
     <section className="panel p-5 sm:p-6">
-      <SectionTitle title="저장한 기록" subtitle="이 브라우저의 작성자 계정으로 저장한 최근 30건입니다." />
+      <SectionTitle title="저장한 기록" subtitle={teamId ? "선택한 팀이 공유하는 최근 관찰 기록 30건입니다." : "이 브라우저의 작성자 계정으로 저장한 최근 30건입니다."} />
       {loading ? <p className="mt-4 text-sm text-slate-500">기록을 불러오는 중…</p> : loadError ? <div className="mt-4 text-sm"><p>기록을 불러오지 못했습니다. Supabase 연결 설정을 확인해주세요.</p><button className="button-outline mt-3" onClick={reload}>다시 불러오기</button></div> : records.length === 0 ? <p className="mt-4 text-sm text-slate-500">아직 저장한 기록이 없습니다.</p> : null}
       <div className="mt-4 space-y-3">{records.map((record) => <article key={record.id} className="rounded-xl border border-slate-200 p-4">
         <div className="flex flex-wrap justify-between gap-2"><strong className="text-sm">{residents.find((item) => item.id === record.resident_id)?.name ?? "어르신"} 어르신 · {record.meal_period ?? "기존 기록"}</strong><time className="text-xs text-slate-500" dateTime={record.created_at}>{new Date(record.created_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}</time></div>
