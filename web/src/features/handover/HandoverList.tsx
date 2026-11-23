@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 import { SectionTitle, StatusBadge } from "@/components/ui";
-import { countByStatus, countOpenHandovers, countOverdue, type HandoverItem, type HandoverStatus } from "./handoverData";
+import { countByStatus, countOpenHandovers, countOverdue, toHandoverItem, type HandoverStatus } from "./handoverData";
+import { HandoverDemoBar } from "./HandoverDemoBar";
+import { useHandoverStore } from "./handoverStore";
 
 type Filter = "all" | HandoverStatus;
 
@@ -11,7 +13,9 @@ export function OverdueBadge() {
   return <span className="inline-flex shrink-0 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-700">기한 초과</span>;
 }
 
-export function HandoverBoard({ items }: { items: HandoverItem[] }) {
+export function HandoverBoard() {
+  const { handovers, actorId } = useHandoverStore();
+  const items = handovers.map(toHandoverItem);
   const [filter, setFilter] = useState<Filter>("all");
   const visible = filter === "all" ? items : items.filter((x) => x.status === filter);
   const overdue = countOverdue(items);
@@ -21,8 +25,21 @@ export function HandoverBoard({ items }: { items: HandoverItem[] }) {
     ...countByStatus(items).map(({ status, label, count }) => ({ key: status, label, count })),
   ];
 
+  const waitingForMe = handovers.filter((h) => h.assignee_id === actorId && h.status === "sent").length;
+
   return (
     <div className="space-y-5">
+      <HandoverDemoBar />
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-slate-600">
+          {waitingForMe > 0 ? <>내가 수신 확인할 인계가 <strong className="text-amber-700">{waitingForMe}건</strong> 있어요.</> : "내가 수신 확인할 인계는 없어요."}
+        </p>
+        <Link href="/handovers/new" className="min-h-11 rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800">
+          + 인계 보내기
+        </Link>
+      </div>
+
       <div className="grid grid-cols-3 gap-3">
         <SummaryCard label="미완료" count={countOpenHandovers(items)} />
         <SummaryCard label="수신 대기" count={items.filter((x) => x.status === "sent").length} />

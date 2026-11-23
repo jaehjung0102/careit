@@ -1,29 +1,14 @@
 import type { Category, Handover, HandoverStatus } from "@/app/api/handovers/_lib/contract";
 import { residents } from "@/lib/mock/dashboard";
 import { getMockHandover, listMockHandovers, MOCK_STAFF } from "./handoverMock";
+import type { HandoverAction, HandoverEvent } from "./handoverTypes";
 
 // API 응답(Handover)을 화면 표시용 모델로 바꾸는 adapter.
 // 상태·문구 매핑은 docs/api.md 9절 "F2 PR #39와 연결할 때의 매핑"을 따른다.
 
 export type { HandoverStatus };
 
-// docs/api.md 7절 HandoverEvent. 계약 코드에는 아직 구현된 action만 있어 화면용으로 전체 모양을 둔다.
-export type HandoverAction = "create" | "acknowledge" | "start" | "complete" | "reassign" | "cancel";
-export type HandoverEvent = {
-  id: string;
-  handover_id: string;
-  action: HandoverAction;
-  actor_id: string;
-  created_at: string;
-  request_id: string;
-  from_status: HandoverStatus | null;
-  to_status: HandoverStatus;
-  from_assignee_id: string | null;
-  to_assignee_id: string;
-  reason: string | null;
-  version_before: number;
-  version_after: number;
-};
+export type { HandoverAction, HandoverEvent };
 
 export const handoverStatusOrder = ["sent", "acknowledged", "in_progress", "completed", "cancelled"] as const satisfies readonly HandoverStatus[];
 export type HandoverTone = "teal" | "amber" | "slate";

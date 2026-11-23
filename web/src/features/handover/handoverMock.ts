@@ -1,5 +1,5 @@
 import { isHandoverOverdue, type Handover } from "@/app/api/handovers/_lib/contract";
-import type { HandoverEvent } from "./handoverData";
+import type { HandoverEvent } from "./handoverTypes";
 
 // 실제 인계 API(#26) 연결 전까지 쓰는 가상 데이터.
 // 응답 모양은 docs/api.md 7·8절(GET /api/handovers, GET /api/handovers/{id})과 같다.
@@ -225,3 +225,19 @@ export function getMockHandover(id: string): { handover: Handover; events: Hando
   const events = [...(mockEvents[id] ?? [])].sort((a, b) => a.version_after - b.version_after);
   return { handover: withOverdue(h), events };
 }
+
+// 인계 작성 화면에서 고를 수 있는 가상 원기록. 실제 관찰 조회(B1 #18) 연결 전까지 사용한다.
+export const MOCK_OBSERVATIONS: Record<string, { id: string; label: string }[]> = {
+  "resident-1": [
+    { id: "00000000-0000-4000-8000-000000000021", label: "11월 22일 오전 보행 관찰" },
+    { id: "00000000-0000-4000-8000-000000000041", label: "11월 22일 오전 피부 관찰" },
+  ],
+  "resident-2": [
+    { id: "00000000-0000-4000-8000-000000000011", label: "11월 22일 점심 식사 관찰" },
+    { id: "00000000-0000-4000-8000-000000000061", label: "11월 21일 아침 수면 관찰" },
+  ],
+  "resident-3": [
+    { id: "00000000-0000-4000-8000-000000000031", label: "11월 21일 18시 수분 누적 기록" },
+    { id: "00000000-0000-4000-8000-000000000051", label: "11월 20일 18시 수분 누적 기록" },
+  ],
+};
