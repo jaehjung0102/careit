@@ -131,17 +131,19 @@ for (const [name, patch, field, status] of [
 }
 
 for (const time of ["2026-11-21T09:00:00", "2026-02-30T00:00:00Z", "2026-11-21T24:00:00Z",
-  "2026-11-21T09:00:01Z", "2026-11-21T00:00:00+24:00"]) {
+  "2026-11-21T09:05:00.001Z", "2026-11-21T00:00:00+24:00"]) {
   test(`rejects invalid or future observation time ${time}`, () => {
     const input = fixture(); input.observation.observed_at = time;
     rejects(input, "observation.observed_at");
   });
 }
 
-test("accepts real leap dates and retains fractional observation precision", () => {
+test("accepts real leap dates and retains fractional precision in the original input", () => {
   const input = fixture();
   input.observation.observed_at = "2024-02-29T00:00:00.123Z";
-  assert.match(previewTemplateDraft(input, NOW).draft_text, /2024-02-29 09:00:00.123 KST/);
+  const result = previewTemplateDraft(input, NOW);
+  assert.match(result.draft_text, /2024-02-29 09:00:00 KST/);
+  assert.equal(result.input.observation.observed_at, "2024-02-29T00:00:00.123Z");
 });
 
 for (const ml of [-1, 1.5, "150mL", Number.NaN, Number.MAX_SAFE_INTEGER + 1]) {

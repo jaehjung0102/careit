@@ -77,8 +77,11 @@ function choice<T extends string>(value: unknown, path: string, options: readonl
   return value as T;
 }
 
+// Device-clock tolerance applies only to observations, never fixed aggregate periods.
+const OBSERVATION_CLOCK_SKEW_MS = 5 * 60 * 1000;
+
 // Validate calendar components too: Date.parse alone normalizes e.g. February 30.
-function timestamp(value: unknown, path: string, now: number): string {
+function timestamp(value: unknown, path: string, now: number, clockSkewMs = 0): string {
   if (typeof value !== "string") invalid(path, "시간대가 있는 ISO 날짜를 보내 주세요.");
   const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,3})?(Z|[+-](\d{2}):(\d{2}))$/.exec(value);
   if (!match) invalid(path, "시간대가 있는 ISO 날짜를 보내 주세요.");
@@ -89,8 +92,13 @@ function timestamp(value: unknown, path: string, now: number): string {
   const time = Date.parse(value);
   if (month < 1 || month > 12 || day < 1 || day > days[month - 1]
     || Number(h) > 23 || Number(min) > 59 || Number(sec) > 59
-    || Number(oh ?? 0) > 23 || Number(om ?? 0) > 59 || !Number.isFinite(time) || time > now) {
-    invalid(path, "미래가 아닌 유효한 날짜와 시간을 보내 주세요.");
+    || Number(oh ?? 0) > 23 || Number(om ?? 0) > 59 || !Number.isFinite(time)) {
+    invalid(path, "유효한 날짜와 시간을 보내 주세요.");
+  }
+  if (time > now + clockSkewMs) {
+    invalid(path, clockSkewMs > 0
+      ? "기기 시각과 관찰 시각을 확인해 주세요. 서버 시각보다 5분 넘게 빠른 관찰은 보낼 수 없습니다."
+      : "서버 현재 시각 이후의 집계 구간은 보낼 수 없습니다.");
   }
   return value;
 }
@@ -114,7 +122,7 @@ function waterMeasurement(value: unknown, now: number): WaterMeasurement | null 
     invalid(`${path}.ml`, "0 이상의 정수 mL 또는 null을 보내 주세요.");
   }
   if (basis === "event") {
-    return { basis, ml, observed_at: timestamp(input.observed_at, `${path}.observed_at`, now) };
+    return { basis, ml, observed_at: timestamp(input.observed_at, `${path}.observed_at`, now, OBSERVATION_CLOCK_SKEW_MS) };
   }
   const start = timestamp(input.period_start_at, `${path}.period_start_at`, now);
   const end = timestamp(input.period_end_at, `${path}.period_end_at`, now);
@@ -152,7 +160,8 @@ export function parseDraftInput(value: unknown, now: Date): DraftInput {
     invalid("observation.source_text", "추가 관찰 원문은 2,000자 이내의 문자열입니다.");
   }
   return { input_revision: input.input_revision, observation: {
-    schema_version: 3, resident_id: resident, observed_at: timestamp(o.observed_at, "observation.observed_at", clock),
+    schema_version: 3, resident_id: resident,
+    observed_at: timestamp(o.observed_at, "observation.observed_at", clock, OBSERVATION_CLOCK_SKEW_MS),
     fields, water_measurement: waterMeasurement(o.water_measurement, clock),
     walking_observation: choice(o.walking_observation, "observation.walking_observation", WALKING_OBSERVATIONS),
     source_text: o.source_text,

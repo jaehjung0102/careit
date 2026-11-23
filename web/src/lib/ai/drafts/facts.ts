@@ -15,7 +15,7 @@ export type DraftFact = { id: string; allowed_texts: string[] };
 
 function inKst(value: string): string {
   return new Date(Date.parse(value) + 9 * 60 * 60 * 1000).toISOString()
-    .replace("T", " ").replace(/\.000Z$/, "").replace(/Z$/, "") + " KST";
+    .slice(0, 19).replace("T", " ") + " KST";
 }
 
 // Requires parsed input. Each accepted wording is built from the same exact fact.
