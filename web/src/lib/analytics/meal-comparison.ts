@@ -1,3 +1,5 @@
+import { kstDate, shiftDate } from "./calendar";
+
 // Pure calculation for docs/api.md §6. The caller must supply only accessible,
 // latest approved snapshots. This is not an authorization or database adapter.
 export type MealObservation = Readonly<{
@@ -38,7 +40,6 @@ const PERCENT: Readonly<Record<string, number>> = {
 const SLOT: Readonly<Record<string, MealSlot>> = { "아침": "breakfast", "점심": "lunch", "저녁": "dinner" };
 const SLOT_LABEL = { breakfast: "아침", lunch: "점심", dinner: "저녁" };
 const MINIMUM_DAYS = 3;
-const KST_OFFSET = 9 * 60 * 60 * 1000;
 
 function mealValue(value: string | null | undefined) {
   if (value == null || value === "미확인") return { value: null, unsupported: false };
@@ -48,30 +49,6 @@ function mealValue(value: string | null | undefined) {
 
 function mealSlot(value: string | null | undefined): MealSlot | null {
   return value != null && Object.hasOwn(SLOT, value) ? SLOT[value] : null;
-}
-
-// Date.parse normalizes invalid dates and accepts timezone-free input. Neither is
-// suitable for assigning an observation to a Korean calendar date.
-function kstDate(value: string | null | undefined): string | null {
-  if (typeof value !== "string") return null;
-  const parts = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,3})?(Z|[+-](\d{2}):(\d{2}))$/.exec(value);
-  if (!parts) return null;
-  const [, y, m, d, h, min, sec, , oh, om] = parts;
-  const year = Number(y), month = Number(m), day = Number(d);
-  const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
-  const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-  const time = Date.parse(value);
-  if (year < 1 || month < 1 || month > 12 || day < 1 || day > days[month - 1]
-    || Number(h) > 23 || Number(min) > 59 || Number(sec) > 59
-    || Number(oh ?? 0) > 23 || Number(om ?? 0) > 59 || !Number.isFinite(time)) return null;
-  const local = new Date(time + KST_OFFSET).toISOString();
-  return /^\d{4}-/.test(local) ? local.slice(0, 10) : null;
-}
-
-function shiftDate(date: string, days: number): string {
-  const shifted = new Date(`${date}T00:00:00Z`);
-  shifted.setUTCDate(shifted.getUTCDate() + days);
-  return shifted.toISOString().slice(0, 10);
 }
 
 const compareText = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
