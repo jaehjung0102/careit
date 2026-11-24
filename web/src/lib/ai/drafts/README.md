@@ -1,6 +1,6 @@
-# B2-03 입력·출력 검증 및 생성 fallback — 2026-11-22
+# B2-03 OpenAI 초안·사실 검증·fallback — 2026-11-25
 
-이번 작업은 `docs/api.md` 4–5절의 입력·출력 검증과 생성 흐름을 준비하는 **로컬 개발 단계**다. `/api/drafts` HTTP 경계는 마련했지만 실제 AI 공급자, 서버 인증/접근, 음성 API, DB 저장은 미연결이다. 앱 route는 연결 전 401/503을 반환한다. #27 완료나 Production 기능으로 표시하지 않는다.
+이번 작업은 `docs/api.md` 4–5절의 입력·출력 검증과 생성 흐름을 준비하는 **로컬 개발 단계**다. OpenAI Responses 어댑터를 구현하고, 사용자가 재사용을 승인한 기존 키로 가상 관찰 3건의 실제 생성을 확인했다. 서버 인증/접근, F1 화면, 음성 API, DB 저장은 미연결이다. 앱 route는 연결 전 401/503을 반환한다. #27 완료나 Production 기능으로 표시하지 않는다.
 
 ## 구현한 범위
 
@@ -58,7 +58,7 @@
 | 누락·변경·추가 사실, 다른 revision, 잘못된 출력 구조 | `template` / `invalid_output` |
 | 입력 오류·명확한 원문 모순 | 기존 400/422 오류; 공급자 호출하지 않음 |
 | 인증/대상 접근 확인 실패 | 오류 그대로 전달; 템플릿 성공으로 숨기지 않음 |
-| 공급자/접근 검증 설정 미준비 | 503 `DEPENDENCY_NOT_READY` |
+| 공급자/접근 설정 미준비, OpenAI 400/401/403/404 또는 계정 quota 부족 | 503 `DEPENDENCY_NOT_READY`; 템플릿 성공으로 숨기지 않음 |
 
 모든 성공/대체 응답에는 계약의 대상 ID, 입력 revision, `requires_confirmation: true`, `b2-01-draft-3` 메타데이터가 있다. 공급자 오류의 원문은 반환하지 않는다. 시간 초과 시 abort 신호를 보내며, 취소를 무시한 어댑터의 늦은 성공/실패가 반환한 템플릿을 바꿀 수 없다. 실제 어댑터는 이 신호를 네트워크 요청까지 전달해야 한다. 설정한 시간 제한은 **공급자 호출**에 적용되며 인증/DB를 포함한 전체 HTTP 제한은 아니다.
 
@@ -85,12 +85,33 @@ F1 연결 순서:
 
 성공 응답 검사도 모델 사실 검증이나 원문 정확성 확인을 대신하지 않는다. 아직 실제 React 화면·마이크·Supabase 저장에 연결하지 않았으므로 테스트 성공을 사용자 흐름 완료로 간주하지 않는다. 전체 HTTP/네트워크 대기와 취소 UI는 F1 연결 때 검증하며, 서버의 10초 제한은 공급자 호출에만 적용된다.
 
+## 실제 OpenAI 어댑터
+
+`openai-provider.ts`의 `createOpenAIDraftProvider(options)`는 서버에서만 사용한다. 고정된 `https://api.openai.com/v1/responses`로 호출하며 API 키를 브라우저나 응답에 전달하지 않는다. Responses 요청은 strict JSON schema, `store: false`, 최대 출력 3072 tokens를 사용한다. 응답은 최대 128 KiB까지만 읽고, 완료된 단일 assistant JSON만 받아 위의 20개 사실 검사를 다시 거친다. JSON schema 통과 자체가 사실 보존 검증은 아니다.
+
+- 추가 관찰 원문은 보내지 않는다. 구조화된 사실과 대상 ID/revision은 OpenAI로 전송된다. 테스트에는 가상 데이터만 사용했다. `store: false`를 공급자의 모든 로그/보존이 없다는 의미로 해석하지 않는다.
+- 제한 시간의 AbortSignal을 실제 fetch에 전달한다. 자동 재시도, 다른 모델/제공업체로 자동 전환, 사용자 지정 base URL은 없다.
+- 불완전 출력·거절·비정상 JSON·추가 tool call은 `invalid_output`, 일시적인 429/5xx 또는 네트워크 장애는 `provider_error` 대체다. 잘못된 키/모델/설정과 계정 quota 부족은 503이다. 상위 오류 본문·키는 반환하거나 로그로 기록하지 않는다.
+- 현재는 **허용된 문구 선택**이다. 실제 모델을 연결했어도 자유로운 문단 요약이나 음성 전사를 구현한 것은 아니다.
+
+`openAIDraftOptionsFromEnv(approvedServerEnv)`에 호출자가 승인한 서버 환경만 전달한다. 함수는 파일을 찾거나 키를 복사하지 않는다.
+
+| 서버 설정 | 현재 값/의미 |
+|---|---|
+| `OPENAI_API_KEY` | 승인된 기존 키. `NEXT_PUBLIC_` 이름을 사용하지 않음 |
+| `OPENAI_DRAFT_MODEL` | 기본 `gpt-6.1-terra`; B2 로컬 기본값이며 팀 최종 모델 합의는 아님 |
+| `OPENAI_DRAFT_REASONING_EFFORT` | 기본 `none`; 선택 모델이 Responses/schema와 해당 effort를 지원해야 함 |
+
+2026-11-25 실제 호출은 키를 프로세스 메모리에만 로드했다. 새 `.env` 파일, GitHub, Vercel에 복사하지 않았다. 배포 담당자와 배포용 설정은 별도 확인이 필요하다. 다른 제공업체로 바꾸려면 해당 `DraftProvider` 어댑터가 필요하며 키만 바꾸는 방식은 아니다.
+
+참고: [Responses API](https://developers.openai.com/api/docs/guides/text), [Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs), [모델 문서](https://developers.openai.com/api/docs/models/gpt-6.1-terra).
+
 ## 연결 전에 남은 작업
 
-1. [#27 공급자 확인 질문](https://github.com/jaehjung0102/careit/issues/27#issuecomment-7059058399)에 따라 팀의 문장 생성·음성 서비스와 설정 방법을 확인한다. 개인 계정이나 다른 프로젝트의 키를 대체 사용하지 않는다.
-2. 내부 어댑터 구조에 맞는 실제 공급자를 연결하고 JSON 파싱, 모델 응답, 취소 신호, 품질을 검증한다. 지원하지 않는 표현의 모순은 이 검사로 찾지 못하므로 원본·선택값·초안의 사람 검토를 유지한다.
+1. 사용자가 승인한 기존 OpenAI 키의 로컬 재사용으로 공급자 구현/실제 호출을 완료했다. [#27 질문](https://github.com/jaehjung0102/careit/issues/27#issuecomment-7059058399)의 팀 최종 모델·배포 설정 담당·음성 서비스는 아직 확정되지 않았다.
+2. 실제 모델의 가상 사례 3건이 통과했으나 일반 품질 보증은 아니다. 지원하지 않는 표현의 모순은 이 검사로 찾지 못하므로 원본·선택값·초안의 사람 검토를 유지한다.
 3. B1과 서버 인증/대상 접근 검증을 연결하고, 설정 미준비는 503으로 처리한다. 템플릿으로 권한 오류를 숨기지 않는다.
-4. `/api/drafts`의 준비된 HTTP factory에 실제 의존 서비스를 연결한다. 가짜 서비스를 사용한 요청/응답 시험은 통과했지만 실제 토큰·모델을 사용한 HTTP 성공 검증은 아직 남아 있다. 연결 경계는 `web/src/app/api/drafts/README.md`를 참고한다.
+4. `createOpenAIPostDraft`에 실제 인증/대상 접근과 서버 OpenAI 설정을 연결한다. 로컬 HTTP factory는 가짜 인증 + 실제 OpenAI로 통과했지만 실제 토큰·DB를 사용하는 앱 검증은 남아 있다. 연결 경계는 `web/src/app/api/drafts/README.md`를 참고한다.
 5. 준비된 client/review helper를 F1 #3과 연결한다. 원문 확인→초안 검토→입력 수정 시 revision 증가/재확인, 입력 보존, 늦은 응답 무시는 함수 수준에서 검증했으며 화면에서 별도 확인해야 한다.
 6. 음성 파일 형식·상한·브라우저/기기·실패 흐름을 확정하고, 실제 저장 경로까지 별도로 검증한다.
 
@@ -105,3 +126,5 @@ node --test "$build_dir/lib/ai/drafts/_tests/"*.test.js "$build_dir/app/api/draf
 ```
 
 이 테스트는 가상의 입력과 가짜 공급자에 대한 내부 함수 검증이다. 변경/누락/추가 사실, 원문 보존, 동시 revision, 시간 초과·늦은 응답·공급자 실패와 권한 오류 분리, 클라이언트 요청 및 검토 상태 전이를 검사한다. 서비스 모델의 품질, 실제 마이크, 인증/RLS, 실제 화면 입력 보존, Production 동작 또는 전체 업무 시간은 검증하지 않는다.
+
+2026-11-25: 초안/HTTP 235개 + 기존 handover 87개, 총 **322개 자동 테스트**와 strict compile/lint를 통과했다. 별도 opt-in 실제 OpenAI 검사에서는 0mL/부정 표현, 미관찰/미실시, 18시 누적 650mL의 가상 사례가 각각 **8.876초 / 6.236초 / 6.775초**, HTTP 200, `generation_mode: llm`, fallback 없음으로 통과했다. 3건 모두 20개 사실·revision·원문 보존·확인 필수를 확인했다. 기본 10초를 늘리거나 자동 재시도하지 않았다. 이는 가짜 인증을 사용하는 로컬 handler 검사이며 실제 로그인·DB·UI·휴대폰 검증이 아니다.

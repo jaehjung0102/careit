@@ -1,5 +1,5 @@
-import { createPostDraft } from "./_lib/post-draft";
+import { createOpenAIPostDraft } from "./_lib/openai-post-draft";
 
-// Team AI provider and B1 server authentication/access are not connected yet.
+// OpenAI adapter is available, but B1 verified authentication/access is pending.
 // Missing Bearer => 401; with Bearer but no dependencies => 503. No mock success.
-export const POST = createPostDraft();
+export const POST = createOpenAIPostDraft();

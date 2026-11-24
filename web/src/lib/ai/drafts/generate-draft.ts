@@ -61,8 +61,8 @@ async function callWithDeadline(provider: DraftProvider, request: DraftProviderR
 }
 
 // Internal service. The HTTP handler authenticates before exposing validation
-// and maps errors to the shared envelope. Its app route has no live dependencies
-// yet; real provider/auth/access integration is still required.
+// and maps errors to the shared envelope. The OpenAI adapter is available;
+// the public route still awaits verified auth/resident-access dependencies.
 export async function generateDraft(value: unknown, dependencies?: DraftGenerationDependencies): Promise<DraftGenerationResult> {
   const preview = previewTemplateDraft(value, dependencies?.now?.() ?? new Date());
   if (typeof dependencies?.authorizeResident !== "function" || typeof dependencies.provider?.generate !== "function") {
@@ -88,6 +88,9 @@ export async function generateDraft(value: unknown, dependencies?: DraftGenerati
     // Built anew: the adapter cannot mutate the input snapshot or expected facts.
     candidate = await callWithDeadline(provider, buildProviderRequest(preview.input), timeoutMs);
   } catch (error) {
+    // A real provider can discover invalid account/model configuration only
+    // after the request. Keep setup failures as 503, not template success.
+    if (error instanceof DraftDependencyError) throw error;
     return result(preview.draft_text, error === DEADLINE ? "timeout" : "provider_error");
   }
   const checked = validateGeneratedDraft(preview.input, candidate);

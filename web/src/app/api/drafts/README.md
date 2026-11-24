@@ -1,6 +1,6 @@
-# B2-03 초안 HTTP 연결 경계 — 2026-11-22
+# B2-03 초안 HTTP 연결 경계 — 2026-11-25
 
-`POST /api/drafts`는 `docs/api.md` 3·5절의 응답 형식으로 내부 초안 생성기를 감싼다. **실제 앱에는 인증·대상 접근·AI 공급자를 아직 연결하지 않았다.** 현재 라우트의 성공을 시연하거나 #27 완료로 처리하지 않는다.
+`POST /api/drafts`는 `docs/api.md` 3·5절의 응답 형식으로 내부 초안 생성기를 감싼다. **실제 OpenAI 어댑터와 서버 조합 함수는 구현했지만 앱 route의 인증·대상 접근은 아직 미연결이다.** 현재 공개 라우트의 성공을 시연하거나 #27 완료로 처리하지 않는다.
 
 2026-11-23: main `70498c0` 반영 후 B1 PR #61과 F1 PR #56을 비교했다. 현재 제공되는 로그인/데이터 코드와 남은 서버 어댑터·전체 입력·승인 저장 합의는 [연결 점검](INTEGRATION.md)에 정리했다. 두 미병합 PR의 기능을 이 브랜치에 연결한 것은 아니다.
 
@@ -21,7 +21,9 @@
 
 ## 어댑터와 오류
 
-`createPostDraft(dependencies)`의 `DraftHttpDependencies`가 서버 전용 연결점이다. `authenticate`, `authorizeResident`, `provider`가 모두 필요하며 `now`와 `timeoutMs`는 서버 설정/시험용이다. 실제 앱의 `route.ts`에는 아직 인자를 전달하지 않는다.
+`createPostDraft(dependencies)`의 `DraftHttpDependencies`가 서버 전용 연결점이다. `authenticate`, `authorizeResident`, `provider`가 모두 필요하며 `now`와 `timeoutMs`는 서버 설정/시험용이다. OpenAI용 `createOpenAIPostDraft({ authenticate, authorizeResident, openai })`가 같은 경계를 사용한다. `openai`에는 승인된 서버 키와 모델 설정만 전달하며, 키만 있다고 인증을 생략하지 않는다. 실제 앱의 `route.ts`는 `createOpenAIPostDraft()`로 인자를 주지 않아 계속 401/503을 반환한다.
+
+조합 함수는 인증 → 입력 검사 → 대상 권한 검사 이후에 OpenAI 어댑터를 생성한다. 누락된 키는 서버 시작을 깨뜨리지 않고 요청 오류 경계에서 503으로 반환한다. 서버 환경 읽기는 `openAIDraftOptionsFromEnv`로 별도 처리할 수 있으며 배포 환경에 키가 자동 복사되는 기능은 없다. 실제 B1 어댑터를 연결할 때 요청별 토큰/DB 문맥을 격리해야 한다.
 
 인증/접근 어댑터는 알려진 실패를 `_lib/http.ts`의 `DraftHttpError`로 변환한다. 원래 오류 메시지를 그대로 전달하지 않는다.
 
@@ -34,15 +36,15 @@
 | `DEPENDENCY_NOT_READY` | 503 | 설정 준비 필요, 자동 재시도 대상으로 표시하지 않음 |
 | 알 수 없는 예외 | 500 `INTERNAL_ERROR` | 일반 메시지, 토큰/원문/stack/상위 서비스 오류 내용 비노출 |
 
-429 응답 변환은 준비되어 있으나 실제 호출 빈도 제한 서비스는 미연결이다. 공급자 장애는 검증된 입력에서 템플릿으로 대체하지만 인증/권한/설정/입력 오류는 성공으로 숨기지 않는다. Provider JSON 파싱, 호출 취소 신호, 인증/권한, 비용/요청 제한은 실제 어댑터 연결 시 검증해야 한다.
+429 응답 변환은 준비되어 있으나 앱의 실제 호출 빈도 제한 서비스는 미연결이다. 공급자의 일시적인 429/5xx·네트워크 장애는 검증된 입력에서 템플릿으로 대체하지만 인증/권한/설정/입력 오류는 성공으로 숨기지 않는다. OpenAI의 400/401/403/404 또는 `insufficient_quota`는 503 `DEPENDENCY_NOT_READY`다. JSON 파싱·10초 제한/취소·출력 검사는 어댑터에 구현했으며, 실제 인증/권한과 앱 비용/요청 제한은 배포 전 연결·검증해야 한다.
 
 ## 확인한 범위와 남은 작업
 
-테스트는 가상 계정/서비스로 HTTP factory와 내부 생성기를 실행한다. 빈 인증·가짜 공급자는 `_tests`에만 있으며 실제 route에 연결하지 않는다. 실제 Supabase 인증/RLS, 외부 AI 모델 품질, F1 화면 입력 보존/재확인, B1 최종 snapshot 저장, 휴대폰/Production 전체 흐름을 검증한 것은 아니다.
+자동 테스트는 가상 계정/서비스로 HTTP factory와 내부 생성기를 실행한다. 빈 인증·가짜 공급자는 `_tests`에만 있으며 실제 route에 연결하지 않는다. 2026-11-25에는 별도 로컬 handler에서 가짜 인증/대상 확인 + **실제 OpenAI**로 가상 기록 3건을 검사했다. 모두 HTTP 200/llm, 20개 사실 보존, 10초 이내였고 원문은 모델에 전송하지 않은 채 보존했다. 실제 Supabase 인증/RLS, 일반 모델 품질, F1 화면 입력 보존/재확인, B1 최종 snapshot 저장, 휴대폰/Production 전체 흐름을 검증한 것은 아니다.
 
-2026-11-22 확인: #27 공급자 질문에 답변 없음. F1 PR #56은 브라우저 SpeechRecognition과 mock 초안이며 아직 미병합이고 실제 AI 제공업체는 후속 사항으로 명시했다. 팀 설정을 재사용한다는 사용자 결정은 유지하며 별도 키/모델을 임의로 설정하지 않는다.
+2026-11-25 확인: #27 공급자 질문에 팀 답변은 없으며 PR #56/#61은 미병합이다. 사용자가 기존 OpenAI 키의 로컬 재사용을 명시적으로 승인했다. 기본 모델 `gpt-6.1-terra`/reasoning `none`은 설정으로 변경 가능하며 팀 최종 모델 결정으로 간주하지 않는다. 키는 테스트 프로세스 메모리에만 로드했고 새 파일/GitHub/Vercel로 복사하지 않았다. F1 #56의 브라우저 SpeechRecognition은 별도 기능이다.
 
-남은 연결: 팀 공급자/모델/서버 설정 확인 → B1 인증·대상 권한 어댑터 → 실제 공급자·HTTP 성공/실패 검증 → F1 원문/revision/재확인 및 B1 저장 연결 → 교차 리뷰·F1 merge·배포 확인.
+남은 연결: B1 인증·대상 권한 어댑터 → 실제 세션으로 HTTP 성공/실패 검증 → F1 원문/revision/재확인 및 B1 #19 저장 연결 → 팀 배포 설정·교차 리뷰·F1 merge·배포 확인. 공급자 어댑터/설정과 실제 호출 근거는 `web/src/lib/ai/drafts/README.md`에 정리했다.
 
 F1이 사용할 B2 client/review helper는 `web/src/lib/ai/drafts/client-request.ts`와 `review-state.ts`에 준비했다. 같은 사이트 POST, 오류 표시, 입력 보존, 수정 후 재확인과 지연 응답 폐기를 다루며 아직 실제 화면에는 연결하지 않았다. 연결 순서와 역할 경계는 해당 폴더 README에 있다.
 
