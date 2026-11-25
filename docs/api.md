@@ -598,7 +598,7 @@ start는 새 request_id와 현재 expected_version, action=start를 사용한다
 | F1 입력/초안 | 17개 fields + 정량 확장, revision, 생성 방식, 확인 상태 | 0과 미확인 분리, 입력 수정 후 재생성·재확인 |
 | F2 변화 | current/mean/delta, 기간, 기준, valid_count, evidence | %p와 % 구분, 단위·집계 시각 표시, 자료 부족을 정상으로 표시하지 않음 |
 | F2 인계 | 담당자 ID, 기한, 상태, version, event 이력 | 읽기와 수신 분리, 완료자/결과, 취소/변경 사유, 재할당 후 재수신 |
-| 운영 #29 | 미확인 인계, 기한 초과, 반영 대기, 오늘 저장 건수 | 오늘 저장 건수는 KST created_at 기준. 분모 없는 완료율을 만들지 않음 |
+| [운영 #29](../web/src/app/api/operations/summary/README.md) | 미확인 인계, 기한 초과, 반영 대기, 오늘 저장 건수 | 오늘 저장 건수는 KST created_at 기준. 분모 없는 완료율을 만들지 않음 |
 
 ### F2 PR #39와 연결할 때의 매핑
 
