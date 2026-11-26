@@ -37,6 +37,9 @@ export function HandoverActionPanel({ handover: h, actorId }: { handover: Handov
   const isAssignee = h.assignee_id === actorId;
   const isSender = h.sender_id === actorId;
   const closed = h.status === "completed" || h.status === "cancelled";
+  // 재시도 대기 중에는 폼을 잠근다. 같은 request_id로는 최초 내용만 다시 보낼 수 있으므로,
+  // 화면의 입력이 재시도로 보낼 내용과 달라지지 않게 한다.
+  const retryPending = Boolean(error?.retry);
 
   // 새 동작은 새 request_id와 지금 보고 있는 version으로 보낸다.
   function send(body: Body) {
@@ -45,6 +48,7 @@ export function HandoverActionPanel({ handover: h, actorId }: { handover: Handov
 
   // 일시 장애·응답 유실 후 재시도는 최초 요청을 그대로(같은 request_id·version) 다시 보낸다.
   // 서버는 같은 요청이면 동작을 반복하지 않고 최초 결과를 돌려준다.
+  // 내용을 고치려면 editAfterFailure()로 재시도를 버리고 send()로 새 요청을 보낸다.
   async function submit(payload: Payload) {
     setBusy(payload.action);
     setError(null);
@@ -62,6 +66,10 @@ export function HandoverActionPanel({ handover: h, actorId }: { handover: Handov
     }
     setError({ ...result.error, retry: result.error.retryable ? payload : undefined });
   }
+
+  // 재시도를 버리고 입력 잠금을 푼다. 이후 저장은 새 request_id로 나간다.
+  // 이전 요청이 실제로는 저장됐다면 같은 expected_version이라 서버가 VERSION_CONFLICT로 막는다.
+  const editAfterFailure = () => setError((prev) => (prev ? { ...prev, retry: undefined } : prev));
 
   const openForm = (next: Form) => {
     setForm(next);
@@ -92,10 +100,25 @@ export function HandoverActionPanel({ handover: h, actorId }: { handover: Handov
               <p className="mt-1 text-xs">화면을 최신 내용으로 바꿨어요. 상태를 확인한 뒤 다시 진행해 주세요.</p>
             )}
             {error.retry && (
-              <button type="button" onClick={() => submit(error.retry!)} disabled={busy !== null}
-                className="mt-2 rounded-lg bg-rose-700 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">
-                같은 요청 다시 보내기
-              </button>
+              <>
+                {error.retry.action !== "acknowledge" && error.retry.action !== "start" && (
+                  <p className="mt-1 text-xs">
+                    다시 보내면 처음 입력한 내용 그대로 저장돼요. 그동안 입력은 잠가 둘게요. 내용을 고치려면 &apos;내용 고치기&apos;를 누른 뒤 새로 저장해 주세요.
+                  </p>
+                )}
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button type="button" onClick={() => submit(error.retry!)} disabled={busy !== null}
+                    className="rounded-lg bg-rose-700 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">
+                    같은 요청 다시 보내기
+                  </button>
+                  {error.retry.action !== "acknowledge" && error.retry.action !== "start" && (
+                    <button type="button" onClick={editAfterFailure} disabled={busy !== null}
+                      className="rounded-lg border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 disabled:opacity-50">
+                      내용 고치기
+                    </button>
+                  )}
+                </div>
+              </>
             )}
           </div>
         )}
@@ -132,6 +155,7 @@ export function HandoverActionPanel({ handover: h, actorId }: { handover: Handov
               send({ action: "complete", checked_item_ids: checked, completion_note: note, follow_up_observation_ids: [] });
             }}
           >
+            <fieldset disabled={retryPending} className="min-w-0 space-y-4 disabled:opacity-60">
             <fieldset>
               <legend className="text-sm font-semibold text-slate-900">확인 항목 ({checked.length}/{h.follow_up_items.length})</legend>
               <p className="mt-1 text-xs text-slate-500">모든 항목을 확인해야 완료할 수 있어요.</p>
@@ -162,6 +186,7 @@ export function HandoverActionPanel({ handover: h, actorId }: { handover: Handov
               submitLabel="조치 완료"
               onCancel={() => openForm("none")}
             />
+            </fieldset>
           </form>
         )}
 
@@ -173,6 +198,7 @@ export function HandoverActionPanel({ handover: h, actorId }: { handover: Handov
               send({ action: "reassign", assignee_id: newAssignee, reason });
             }}
           >
+            <fieldset disabled={retryPending} className="min-w-0 space-y-4 disabled:opacity-60">
             <label className="block text-sm">
               <span className="font-semibold text-slate-900">새 담당자</span>
               <select value={newAssignee} onChange={(e) => setNewAssignee(e.target.value)} required
@@ -188,6 +214,7 @@ export function HandoverActionPanel({ handover: h, actorId }: { handover: Handov
             <p className="text-xs text-slate-500">기한은 그대로이고, 새 담당자가 처음부터 다시 수신 확인해요. 이전 기록은 이력에 남아요.</p>
             <FormButtons busy={busy === "reassign"} disabled={busy !== null || !newAssignee || !reason.trim() || [...reason].length > REASON_MAX}
               submitLabel="담당자 변경" onCancel={() => openForm("none")} />
+            </fieldset>
           </form>
         )}
 
@@ -199,11 +226,13 @@ export function HandoverActionPanel({ handover: h, actorId }: { handover: Handov
               send({ action: "cancel", reason });
             }}
           >
+            <fieldset disabled={retryPending} className="min-w-0 space-y-4 disabled:opacity-60">
             <TextArea label="취소 사유" value={reason} onChange={setReason} max={REASON_MAX}
               placeholder="예: 같은 내용의 인계가 이미 있어 중복으로 취소합니다." />
             <p className="text-xs text-slate-500">취소한 인계는 다시 진행할 수 없어요. 미완료·기한 초과 집계에서도 빠져요.</p>
             <FormButtons busy={busy === "cancel"} disabled={busy !== null || !reason.trim() || [...reason].length > REASON_MAX}
               submitLabel="인계 취소" danger onCancel={() => openForm("none")} />
+            </fieldset>
           </form>
         )}
       </div>

@@ -25,7 +25,8 @@ function toLocalInput(date: Date) {
 
 function preset(kind: "3h" | "today18" | "tomorrow9") {
   const d = new Date();
-  if (kind === "3h") d.setHours(d.getHours() + 3, 0, 0, 0);
+  // 지금부터 실제 3시간 뒤(분 유지). 초·밀리초만 버린다.
+  if (kind === "3h") { d.setTime(d.getTime() + 3 * 60 * 60 * 1000); d.setSeconds(0, 0); }
   if (kind === "today18") d.setHours(18, 0, 0, 0);
   if (kind === "tomorrow9") { d.setDate(d.getDate() + 1); d.setHours(9, 0, 0, 0); }
   return toLocalInput(d);
