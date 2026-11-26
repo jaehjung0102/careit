@@ -105,10 +105,9 @@ export function createOpenAIDraftProvider(options: OpenAIDraftOptions): DraftPro
       try { body = await readJson(response); }
       catch { throw new Error("OpenAI draft response failed."); }
       if (!response.ok) {
-        const code = object(body) && object(body.error) ? body.error.code : null;
-        // Invalid credentials/model/schema or exhausted account quota require
-        // setup attention. Do not disguise these as a successful template.
-        if ([400, 401, 403, 404].includes(response.status) || code === "insufficient_quota") throw new DraftDependencyError();
+        // A 429, including exhausted quota, uses the existing template fallback.
+        // Invalid credentials, model access, and request setup still surface 503.
+        if ([400, 401, 403, 404].includes(response.status)) throw new DraftDependencyError();
         throw new Error("OpenAI draft provider unavailable.");
       }
       return candidateFromResponse(body);

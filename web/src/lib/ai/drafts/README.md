@@ -54,11 +54,11 @@
 |---|---|
 | 허용된 사실/문구로 정상 응답 | `generation_mode: llm`, `fallback_reason: null` |
 | 공급자 호출이 기본 10초 초과 | `generation_mode: template`, `fallback_reason: timeout` |
-| 공급자 호출 실패 | `template` / `provider_error` |
+| 공급자 호출 실패 (계정 quota 부족 포함) | `template` / `provider_error` |
 | 누락·변경·추가 사실, 다른 revision, 잘못된 출력 구조 | `template` / `invalid_output` |
 | 입력 오류·명확한 원문 모순 | 기존 400/422 오류; 공급자 호출하지 않음 |
 | 인증/대상 접근 확인 실패 | 오류 그대로 전달; 템플릿 성공으로 숨기지 않음 |
-| 공급자/접근 설정 미준비, OpenAI 400/401/403/404 또는 계정 quota 부족 | 503 `DEPENDENCY_NOT_READY`; 템플릿 성공으로 숨기지 않음 |
+| 공급자/접근 설정 미준비, OpenAI 400/401/403/404 | 503 `DEPENDENCY_NOT_READY` |
 
 모든 성공/대체 응답에는 계약의 대상 ID, 입력 revision, `requires_confirmation: true`, `b2-01-draft-3` 메타데이터가 있다. 공급자 오류의 원문은 반환하지 않는다. 시간 초과 시 abort 신호를 보내며, 취소를 무시한 어댑터의 늦은 성공/실패가 반환한 템플릿을 바꿀 수 없다. 실제 어댑터는 이 신호를 네트워크 요청까지 전달해야 한다. 설정한 시간 제한은 **공급자 호출**에 적용되며 인증/DB를 포함한 전체 HTTP 제한은 아니다.
 
@@ -91,7 +91,7 @@ F1 연결 순서:
 
 - 추가 관찰 원문은 보내지 않는다. 구조화된 사실과 대상 ID/revision은 OpenAI로 전송된다. 테스트에는 가상 데이터만 사용했다. `store: false`를 공급자의 모든 로그/보존이 없다는 의미로 해석하지 않는다.
 - 제한 시간의 AbortSignal을 실제 fetch에 전달한다. 자동 재시도, 다른 모델/제공업체로 자동 전환, 사용자 지정 base URL은 없다.
-- 불완전 출력·거절·비정상 JSON·추가 tool call은 `invalid_output`, 일시적인 429/5xx 또는 네트워크 장애는 `provider_error` 대체다. 잘못된 키/모델/설정과 계정 quota 부족은 503이다. 상위 오류 본문·키는 반환하거나 로그로 기록하지 않는다.
+- 불완전 출력·거절·비정상 JSON·추가 tool call은 `invalid_output`, HTTP 429(계정 quota 부족 포함)·5xx 또는 네트워크 장애는 `provider_error` 대체다. 잘못된 키/모델/설정은 503이다. 상위 오류 본문·키는 반환하거나 로그로 기록하지 않는다.
 - 현재는 **허용된 문구 선택**이다. 실제 모델을 연결했어도 자유로운 문단 요약이나 음성 전사를 구현한 것은 아니다.
 
 `openAIDraftOptionsFromEnv(approvedServerEnv)`에 호출자가 승인한 서버 환경만 전달한다. 함수는 파일을 찾거나 키를 복사하지 않는다.

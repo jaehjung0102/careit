@@ -109,8 +109,13 @@ for (const status of [400, 401, 403, 404]) {
     await assert.rejects(generateDraft(generationInput(), dependencies(providerFor({ error: { message: KEY } }, status))), DraftDependencyError);
   });
 }
-test("account quota exhaustion is a setup error, not transient template success", async () => {
-  await assert.rejects(generateDraft(generationInput(), dependencies(providerFor({ error: { code: "insufficient_quota" } }, 429))), DraftDependencyError);
+test("account quota exhaustion gives a clearly marked template that still requires confirmation", async () => {
+  const input = generationInput("가상 관찰 원문");
+  const result = await generateDraft(input, dependencies(providerFor({ error: { code: "insufficient_quota" } }, 429)));
+  assert.deepEqual([
+    result.data.generation_mode, result.data.fallback_reason, result.data.requires_confirmation,
+  ], ["template", "provider_error", true]);
+  assert.equal(result.data.draft_text, previewTemplateDraft(input, GENERATION_NOW).draft_text);
 });
 
 test("network errors are sanitized and produce provider-error fallback", async () => {
