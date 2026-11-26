@@ -1,0 +1,15 @@
+{
+  "data": {
+    "date": "2026-11-25",
+    "timezone": "Asia/Seoul",
+    "unacknowledged_handovers": 1,
+    "overdue_handovers": 1,
+    "pending_reflection": 2,
+    "saved_today": 2,
+    "evaluated_at": "2026-11-25T05:00:00.000Z"
+  },
+  "meta": {
+    "contract_version": "b2-01-draft-3",
+    "data_source": "mock"
+  }
+}
