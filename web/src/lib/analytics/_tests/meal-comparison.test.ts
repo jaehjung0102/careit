@@ -15,6 +15,16 @@ function fixture() {
 }
 const baseline = () => [row(1, 11), row(2, 12), row(3, 13)];
 
+test("database timestamps with microseconds retain the meal comparison and evidence", () => {
+  const withMicros = (entry: MealObservation) => ({
+    ...entry, observed_at: entry.observed_at!.replace("+09:00", ".123456+09:00"),
+  });
+  const history = baseline().map(withMicros);
+  const result = compareMeal(withMicros(row(99, 16, "절반")), history);
+  assert.deepEqual([result.status, result.delta, result.valid_count], ["changed", -50, 3]);
+  assert.deepEqual(result.evidence.map(entry => entry.measured_at), history.map(entry => entry.observed_at));
+});
+
 test("contract example: lunch 50 versus prior 7-day mean 90 is -40 percentage points", () => {
   const { current, history } = fixture();
   const result = compareMeal(current, history);

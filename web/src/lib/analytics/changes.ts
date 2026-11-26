@@ -1,5 +1,5 @@
 import type { Category } from "../../app/api/handovers/_lib/contract";
-import { kstDate, shiftDate } from "./calendar";
+import { kstDate, parseInstant, shiftDate, utcTimestamp } from "./calendar";
 import { compareMeal, type MealObservation, type MealComparison } from "./meal-comparison";
 import { compareWater, waterBaselineWindow, type WaterObservation, type WaterComparison } from "./water-comparison";
 
@@ -67,7 +67,10 @@ export function compareContext(current: ComparisonObservation, history: readonly
       return row.resident_id === current.resident_id && row.id !== current.id && date !== null
         && date >= window.start_date && date <= window.end_date && typeof contextValue(row, category) === "string";
     }).map((row) => ({ observation_id: row.id, value: contextValue(row, category) as string, observed_at: row.observed_at! })) : [];
-    items.sort((a, b) => Date.parse(a.observed_at) - Date.parse(b.observed_at) || (a.observation_id < b.observation_id ? -1 : a.observation_id > b.observation_id ? 1 : 0));
+    items.sort((a, b) => {
+      const left = parseInstant(a.observed_at)!, right = parseInstant(b.observed_at)!;
+      return left < right ? -1 : left > right ? 1 : a.observation_id < b.observation_id ? -1 : a.observation_id > b.observation_id ? 1 : 0;
+    });
     return [{ category, current_value: value,
       status: value === null || value === "미확인" ? "unknown" : CONTEXT_OPTIONS[category].includes(value) ? "recorded" : "unsupported_legacy",
       history: items }];
@@ -82,7 +85,7 @@ export function calculateChanges(current: ComparisonObservation, history: readon
     context: compareContext(current, history),
   };
   // Wire timestamps use UTC Z; source snapshots remain unchanged.
-  for (const result of data.results) for (const row of result.evidence) row.measured_at = new Date(row.measured_at).toISOString();
-  for (const item of data.context) for (const row of item.history) if (row.observed_at) row.observed_at = new Date(row.observed_at).toISOString();
+  for (const result of data.results) for (const row of result.evidence) row.measured_at = utcTimestamp(row.measured_at);
+  for (const item of data.context) for (const row of item.history) if (row.observed_at) row.observed_at = utcTimestamp(row.observed_at);
   return data;
 }

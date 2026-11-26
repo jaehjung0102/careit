@@ -70,6 +70,17 @@ test("past intervals that have not ended at evaluation time are excluded", () =>
   assert.equal(r.baseline_mean, null);
 });
 
+test("a water cutoff one microsecond after the clock is still incomplete", () => {
+  const cutoff = "2026-11-24T18:00:00.000001+09:00";
+  const row = { ...current(), water_measurement: { ...water(24), period_end_at: cutoff } };
+  const atBoundary = compareWater(row, history(), NOW);
+  assert.equal(atBoundary.status, "incomplete_period");
+  assert.equal(atBoundary.basis?.end_local, "18:00:00.000001");
+  const later = compareWater(row, history(), new Date(NOW.getTime() + 1));
+  assert.equal(later.valid_count, 0); // Earlier cutoffs at exactly 18:00 are distinct.
+  assert.equal(later.status, "insufficient_data");
+});
+
 for (const ml of [-1, 1.5, "650", Number.NaN, Number.POSITIVE_INFINITY, Number.MAX_SAFE_INTEGER + 1, undefined]) {
   test(`does not infer or coerce invalid stored amount ${String(ml)}`, () => {
     const r = compareWater({ ...current(), water_measurement: { ...water(24), ml } }, history(), NOW);

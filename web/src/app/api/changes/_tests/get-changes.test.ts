@@ -45,6 +45,23 @@ test("configured test adapter returns contract results and no-store; never label
   assert.deepEqual(f.calls, ["authenticate", "current", "history"]);
 });
 
+test("database fractional timestamps keep their exact instant in UTC evidence", async () => {
+  const f = fixture();
+  const databaseTime = (row: ReturnType<typeof current>, day: number, fraction: string) => ({
+    ...row, observed_at: `2026-11-${day}T12:15:00.${fraction}+09:00`,
+  });
+  f.setCurrent(databaseTime(current(), 24, "123456"));
+  const rows = history().map((row, i) => databaseTime(row, 19 + i, "123456"));
+  f.setHistory(rows);
+  const response = await f.GET(req());
+  assert.equal(response.status, 200);
+  const data = (await response.json()).data;
+  assert.equal(data.results[0].delta, -40);
+  assert.equal(data.results[0].evidence[0].measured_at, "2026-11-19T03:15:00.123456Z");
+  assert.ok(data.context.some((item: { history: { observed_at: string }[] }) =>
+    item.history.some(entry => entry.observed_at === "2026-11-19T03:15:00.123456Z")));
+});
+
 for (const auth of [null, "Basic bad", "Bearer", "Bearer token extra"]) {
   test(`no data is read for missing/malformed authentication ${auth}`, async () => {
     const f = fixture(); const r = await f.GET(req("nonsense=x", auth));

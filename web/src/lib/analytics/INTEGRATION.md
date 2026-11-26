@@ -17,7 +17,7 @@
 
 `listObservationRevisions(id)`는 **한 기록의 수정 내역**이다. 같은 관찰의 version 1/2/3을 서로 다른 날짜의 관찰 세 건으로 평균에 넣으면 안 된다. 최신 17항목 snapshot만 골라도 누락된 관찰 시각/정량/승인 의미가 생기지는 않는다. B2 input_revision과 B1 DB version도 서로 다른 번호다.
 
-기존 `ComparisonRepository.getVisibleCurrent` / `readAllVisibleHistory` 경계를 유지한다. 실제 구현 담당·정정/승인 projection·중복 정책·DB 시각 정밀도는 B1/F1 답변 대기다. 데이터가 없다는 문제를 가상 값이나 임의 승인으로 해결하지 않는다.
+기존 `ComparisonRepository.getVisibleCurrent` / `readAllVisibleHistory` 경계를 유지한다. 실제 구현 담당·정정/승인 projection·중복 정책은 B1/F1 답변 대기다. DB의 시간대와 최대 6자리 소수 초는 그대로 전달한다. 데이터가 없다는 문제를 가상 값이나 임의 승인으로 해결하지 않는다.
 
 ## F2 화면 연결
 

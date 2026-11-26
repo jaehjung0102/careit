@@ -3,7 +3,7 @@ import type { MealComparison } from "./meal-comparison";
 
 export type WaterObservation = Readonly<{ id: string; resident_id: string; water_measurement?: unknown }>;
 type AggregateBasis = "daily_total" | "cumulative_cutoff";
-type Period = { date: string; start: string; end: string; endInstant: number; measuredAt: string; complete: boolean };
+type Period = { date: string; start: string; end: string; endInstant: bigint; measuredAt: string; complete: boolean };
 type Measurement = { ml: number | null; kind: "missing" | "unsupported" | "event" | AggregateBasis; period: Period | null };
 type WaterStatus = MealComparison["status"] | "not_aggregate" | "incomplete_period";
 type Reason = "unsupported_legacy" | "not_aggregate" | "wrong_context" | "unknown_value" | "incomplete_period" | "duplicate" | "conflicting_duplicate";
@@ -62,8 +62,9 @@ function describe(r: WaterComparison): string {
 // Inputs must already be the latest approved snapshots within the caller's access.
 // Event amounts are never summed, and cumulative totals are never added together.
 export function compareWater(current: WaterObservation, history: readonly WaterObservation[], now: Date): WaterComparison {
-  const clock = now.getTime();
-  if (!Number.isFinite(clock)) throw new Error("A valid server evaluation time is required.");
+  const milliseconds = now.getTime();
+  if (!Number.isFinite(milliseconds)) throw new Error("A valid server evaluation time is required.");
+  const clock = BigInt(milliseconds) * BigInt(1000);
   const value = measurement(current.water_measurement), period = value.period;
   const window = waterBaselineWindow(current);
   const result: WaterComparison = {
