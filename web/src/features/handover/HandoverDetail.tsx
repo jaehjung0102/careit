@@ -7,7 +7,9 @@ import {
 } from "./handoverData";
 import { OverdueBadge } from "./HandoverList";
 
-export function HandoverDetail({ handover: h, events, item }: { handover: Handover; events: HandoverEvent[]; item: HandoverItem }) {
+export function HandoverDetail({ handover: h, events, item, actions }: {
+  handover: Handover; events: HandoverEvent[]; item: HandoverItem; actions?: ReactNode;
+}) {
   return (
     <div className="space-y-6">
       <section className="panel p-5 sm:p-6">
@@ -39,6 +41,8 @@ export function HandoverDetail({ handover: h, events, item }: { handover: Handov
           <Info label="조치 시작">{formatKst(h.started_at)}</Info>
         </dl>
       </section>
+
+      {actions}
 
       <section className="panel">
         <div className="panel-heading">
@@ -116,7 +120,7 @@ export function HandoverDetail({ handover: h, events, item }: { handover: Handov
       </section>
 
       <p className="text-xs leading-5 text-slate-400">
-        예시 데이터입니다. 이 화면을 열어 보는 것만으로는 수신 확인이 되지 않아요. 수신 확인·조치 완료 버튼은 이후 작업(F2-03)에서 연결됩니다.
+        예시 데이터입니다. 이 화면을 열어 보는 것만으로는 수신 확인이 되지 않아요. 실제 인계 API 연결 전이라 변경 내용은 이 브라우저 탭에만 남아요.
       </p>
     </div>
   );
