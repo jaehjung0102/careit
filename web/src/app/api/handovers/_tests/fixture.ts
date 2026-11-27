@@ -2,7 +2,7 @@
 import { HandoverError, isHandoverOverdue, type AcknowledgeHandoverInput, type ImplementedHandoverEvent, type CreateHandoverInput, type Handover } from "../_lib/contract";
 import { createPostHandover, type CreateHandoverDependencies } from "../_lib/create-handover";
 import { createGetHandovers, type ListHandoverDependencies } from "../_lib/list-handovers";
-import { createAcknowledgeHandover, type AcknowledgeHandoverDependencies, type AcknowledgementResult } from "../_lib/acknowledge-handover";
+import { createHandoverDetail, type HandoverDetailDependencies, type ActionResult } from "../_lib/handover-detail";
 
 export const SENDER = "30000000-0000-4000-8000-000000000002";
 export const RECIPIENT = "30000000-0000-4000-8000-000000000001";
@@ -49,18 +49,24 @@ export function fixture() {
   let accessAllowed = true;
   const rows = new Map<string, { owner: string; original: string; handover: Handover }>();
   const events: ImplementedHandoverEvent[] = [];
-  const acknowledgementRequests = new Map<string, { original: string; event: AcknowledgementResult["event"] }>();
+  const actionRequests = new Map<string, { original: string; event: ActionResult["event"] }>();
   let eventSequence = 0;
   let writes = 0;
   let listReads = 0;
-  let acknowledgementWrites = 0;
-  let failAcknowledgement = false;
-  const dependencies: CreateHandoverDependencies & ListHandoverDependencies & AcknowledgeHandoverDependencies = {
+  let actionWrites = 0;
+  let failAction = false;
+  function visibleRow(actorId: string, handoverId: string) {
+    const row = rows.get(handoverId);
+    if (!row || !accessAllowed || !["resident-1", "resident-2"].includes(row.handover.resident_id)) return null;
+    return [row.handover.sender_id, row.handover.assignee_id, "admin"].includes(actorId) ? row : null;
+  }
+  const dependencies: CreateHandoverDependencies & ListHandoverDependencies & HandoverDetailDependencies = {
     now: () => new Date(time),
     newEventId: () => `50000000-0000-4000-8000-${String(++eventSequence).padStart(12, "0")}`,
     async authenticate(token) {
       if (token === "demo-sender") return { id: SENDER };
       if (token === "demo-recipient") return { id: RECIPIENT };
+      if (token === "demo-admin") return { id: "admin" };
       if (token === "demo-other") return { id: OTHER };
       if (token === "demo-family") return { id: "family" };
       throw new HandoverError("UNAUTHENTICATED", "로그인을 확인해 주세요.");
@@ -74,29 +80,35 @@ export function fixture() {
     },
     repository: {
       dataSource: "mock",
-      async acknowledgeOnce(actor, handoverId, input, apply) {
+      async readVisible(actor, id) {
+        const row = visibleRow(actor.id, id);
+        if (!row) return null;
+        return structuredClone({ handover: row.handover, events: events.filter(event => event.handover_id === id) });
+      },
+      async changeOnce(actor, handoverId, input, apply) {
         // Single-process test transaction: no await between lookup and commit.
-        const row = rows.get(handoverId);
-        if (!row || !accessAllowed || !["resident-1", "resident-2"].includes(row.handover.resident_id)
-          || (row.handover.sender_id !== actor.id && row.handover.assignee_id !== actor.id)) {
-          throw new HandoverError("NOT_FOUND", "인계를 찾을 수 없습니다.");
-        }
+        const row = visibleRow(actor.id, handoverId);
+        if (!row) throw new HandoverError("NOT_FOUND", "인계를 찾을 수 없습니다.");
         const key = `${actor.id}:${handoverId}:${input.request_id}`;
         const original = JSON.stringify(input);
-        const previous = acknowledgementRequests.get(key);
+        const previous = actionRequests.get(key);
         if (previous) {
           if (previous.original !== original) {
             throw new HandoverError("IDEMPOTENCY_CONFLICT", "같은 요청 ID에 다른 내용이 있습니다.");
           }
           return { handover: structuredClone(row.handover), event: structuredClone(previous.event) };
         }
-        const changed = apply(structuredClone(row.handover));
+        const changed = apply(structuredClone(row.handover), {
+          canManage: actor.id === row.handover.sender_id || actor.id === "admin",
+          validAssignee: input.action === "reassign" && [RECIPIENT, OTHER].includes(input.assignee_id),
+          validFollowUps: input.action === "complete" && input.follow_up_observation_ids.every(id => id === INPUT.observation_ids[0]),
+        });
         // Failure injection before the test commit, leaving row/event/request unchanged.
-        if (failAcknowledgement) throw new HandoverError("SERVICE_UNAVAILABLE", "잠시 후 다시 시도해 주세요.");
+        if (failAction) throw new HandoverError("SERVICE_UNAVAILABLE", "잠시 후 다시 시도해 주세요.");
         row.handover = structuredClone(changed.handover);
         events.push(structuredClone(changed.event));
-        acknowledgementRequests.set(key, { original, event: structuredClone(changed.event) });
-        acknowledgementWrites += 1;
+        actionRequests.set(key, { original, event: structuredClone(changed.event) });
+        actionWrites += 1;
         return structuredClone(changed);
       },
       async listVisible(actor, query, asOf) {
@@ -107,7 +119,7 @@ export function fixture() {
           // Fictional access policy only: two residents in this demo facility,
           // sender/recipient access. Resident 3 represents an inaccessible facility.
           .filter((row) => ["resident-1", "resident-2"].includes(row.resident_id)
-            && (row.sender_id === actor.id || row.assignee_id === actor.id))
+            && [row.sender_id, row.assignee_id, "admin"].includes(actor.id))
           .filter((row) => (query.resident_id === null || row.resident_id === query.resident_id)
             && (query.assignee_id === null || row.assignee_id === query.assignee_id)
             && (query.status === null || row.status === query.status)
@@ -140,12 +152,12 @@ export function fixture() {
   };
   return {
     dependencies, post: createPostHandover(dependencies), get: createGetHandovers(dependencies),
-    acknowledge: createAcknowledgeHandover(dependencies), rows, events,
+    detail: createHandoverDetail(dependencies), rows, events,
     writes: () => writes,
     listReads: () => listReads,
-    acknowledgementWrites: () => acknowledgementWrites,
-    acknowledgementRequestCount: () => acknowledgementRequests.size,
-    failAcknowledgementCommit: (value: boolean) => { failAcknowledgement = value; },
+    actionWrites: () => actionWrites,
+    actionRequestCount: () => actionRequests.size,
+    failActionCommit: (value: boolean) => { failAction = value; },
     setTime: (value: string) => { time = new Date(value); },
     revokeAccess: () => { accessAllowed = false; },
   };

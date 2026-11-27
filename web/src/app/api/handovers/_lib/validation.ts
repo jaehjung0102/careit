@@ -1,4 +1,4 @@
-import { CATEGORIES, HandoverError, type Category, type CreateHandoverInput } from "./contract";
+import { CATEGORIES, HandoverError, type Category, type CreateHandoverInput, type HandoverActionInput } from "./contract";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -97,4 +97,44 @@ export function parseCreateHandover(value: unknown): CreateHandoverInput {
     follow_up_items: items, assignee_id: uuid(input.assignee_id, "assignee_id"),
     due_at: dueAt(input.due_at),
   };
+}
+
+function uuidList(value: unknown, field: string, min: number, max: number): string[] {
+  if (!Array.isArray(value) || value.length < min || value.length > max) {
+    invalid(field, `${min}~${max}개 항목을 보내 주세요.`);
+  }
+  const ids = value.map((item) => uuid(item, field));
+  unique(ids, field);
+  return ids;
+}
+
+export function parseHandoverAction(value: unknown): HandoverActionInput {
+  if (!value || typeof value !== "object" || Array.isArray(value)) invalid("body", "객체를 보내 주세요.");
+  const { action } = value as Record<string, unknown>;
+  const fields = ["action", "expected_version", "request_id"];
+  if (action === "complete") fields.push("checked_item_ids", "completion_note", "follow_up_observation_ids");
+  if (action === "reassign") fields.push("assignee_id", "reason");
+  if (action === "cancel") fields.push("reason");
+  const input = object(value, "body", fields);
+  const version = input.expected_version;
+  if (typeof version !== "number" || !Number.isSafeInteger(version) || version < 1) {
+    invalid("expected_version", "양의 정수가 필요합니다.");
+  }
+  const base = { request_id: uuid(input.request_id, "request_id"), expected_version: version };
+  switch (action) {
+    case "acknowledge":
+    case "start":
+      return { ...base, action };
+    case "cancel":
+      return { ...base, action, reason: text(input.reason, "reason", 500) };
+    case "reassign":
+      return { ...base, action, assignee_id: uuid(input.assignee_id, "assignee_id"), reason: text(input.reason, "reason", 500) };
+    case "complete":
+      return { ...base, action, checked_item_ids: uuidList(input.checked_item_ids, "checked_item_ids", 1, 10),
+        completion_note: text(input.completion_note, "completion_note", 2000),
+        follow_up_observation_ids: uuidList(input.follow_up_observation_ids === undefined ? [] : input.follow_up_observation_ids,
+          "follow_up_observation_ids", 0, 20) };
+    default:
+      return invalid("action", "지원하는 인계 동작을 보내 주세요.");
+  }
 }

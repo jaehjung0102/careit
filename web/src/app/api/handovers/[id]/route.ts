@@ -1,9 +1,12 @@
-import { createAcknowledgeHandover } from "../_lib/acknowledge-handover";
+import { createHandoverDetail } from "../_lib/handover-detail";
 
-// Same closed-by-default behavior as creation/listing until B1 is connected.
-const acknowledge = createAcknowledgeHandover();
+const detail = createHandoverDetail();
+type Context = { params: Promise<{ id: string }> };
 
-export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
-  const { id } = await context.params;
-  return acknowledge(request, id);
+export async function GET(request: Request, context: Context) {
+  return detail.get(request, (await context.params).id);
+}
+
+export async function PATCH(request: Request, context: Context) {
+  return detail.patch(request, (await context.params).id);
 }
