@@ -74,7 +74,20 @@ export type AcknowledgeHandoverEvent = Omit<CreateHandoverEvent,
   version_after: number;
 };
 
-export type ImplementedHandoverEvent = CreateHandoverEvent | AcknowledgeHandoverEvent;
+export type HandoverActionInput = Pick<AcknowledgeHandoverInput, "request_id" | "expected_version"> & (
+  | { action: "acknowledge" | "start" }
+  | { action: "complete"; checked_item_ids: string[]; completion_note: string; follow_up_observation_ids: string[] }
+  | { action: "reassign"; assignee_id: string; reason: string }
+  | { action: "cancel"; reason: string }
+);
+
+export type HandoverActionEvent = Omit<AcknowledgeHandoverEvent, "action" | "from_status" | "to_status" | "reason"> & {
+  action: HandoverActionInput["action"];
+  from_status: HandoverStatus;
+  to_status: HandoverStatus;
+  reason: string | null;
+};
+export type ImplementedHandoverEvent = CreateHandoverEvent | HandoverActionEvent;
 
 export function isHandoverOverdue(handover: Pick<Handover, "status" | "due_at">, now: Date): boolean {
   return handover.status !== "completed" && handover.status !== "cancelled"
