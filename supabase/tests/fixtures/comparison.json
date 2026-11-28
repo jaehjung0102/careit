@@ -1,0 +1,980 @@
+{
+  "data_source": "mock",
+  "timezone": "Asia/Seoul",
+  "evaluated_at": "2026-11-29T09:00:00Z",
+  "notice": "가상 비교 입력. observed_at·water_measurement는 테스트 전용이며 현재 DB의 저장/승인 사실이 아님.",
+  "actors": {
+    "author": {
+      "id": "20000000-0000-4000-8000-000000000301",
+      "team_id": "20000000-0000-4000-8000-000000000100",
+      "role": "caregiver",
+      "is_anonymous": false
+    },
+    "admin": {
+      "id": "20000000-0000-4000-8000-000000000302",
+      "team_id": "20000000-0000-4000-8000-000000000100",
+      "role": "admin",
+      "is_anonymous": false
+    },
+    "peer": {
+      "id": "20000000-0000-4000-8000-000000000303",
+      "team_id": "20000000-0000-4000-8000-000000000100",
+      "role": "caregiver",
+      "is_anonymous": false
+    },
+    "outsider": {
+      "id": "20000000-0000-4000-8000-000000000304",
+      "team_id": "20000000-0000-4000-8000-000000000101",
+      "role": "admin",
+      "is_anonymous": false
+    },
+    "unassigned": {
+      "id": "20000000-0000-4000-8000-000000000305",
+      "team_id": null,
+      "role": null,
+      "is_anonymous": false
+    },
+    "anonymous": {
+      "id": "20000000-0000-4000-8000-000000000306",
+      "team_id": "20000000-0000-4000-8000-000000000100",
+      "role": "caregiver",
+      "is_anonymous": true
+    }
+  },
+  "teams": [
+    {
+      "id": "20000000-0000-4000-8000-000000000100",
+      "name": "가상 비교 A팀"
+    },
+    {
+      "id": "20000000-0000-4000-8000-000000000101",
+      "name": "가상 비교 B팀"
+    }
+  ],
+  "residents": [
+    {
+      "id": "20000000-0000-4000-8000-000000000200",
+      "team_id": "20000000-0000-4000-8000-000000000100",
+      "name": "가상 비교 어르신 A",
+      "room": "가상 301호"
+    },
+    {
+      "id": "20000000-0000-4000-8000-000000000201",
+      "team_id": "20000000-0000-4000-8000-000000000100",
+      "name": "가상 비교 어르신 B",
+      "room": "가상 302호"
+    },
+    {
+      "id": "20000000-0000-4000-8000-000000000202",
+      "team_id": "20000000-0000-4000-8000-000000000101",
+      "name": "다른 팀 가상 어르신",
+      "room": "가상 401호"
+    }
+  ],
+  "records": [
+    {
+      "author": "author",
+      "team_id": "20000000-0000-4000-8000-000000000100",
+      "record": {
+        "id": "20000000-0000-4000-8000-000000000001",
+        "resident_id": "20000000-0000-4000-8000-000000000200",
+        "observed_at": "2026-11-24T03:15:00Z",
+        "fields": {
+          "meal_period": "점심",
+          "meal": "전량",
+          "bowel": "미확인",
+          "walking": "부축 필요",
+          "hygiene": "미실시",
+          "medication": "해당 없음"
+        },
+        "walking_observation": null,
+        "water_measurement": {
+          "basis": "cumulative_cutoff",
+          "ml": 800,
+          "period_start_at": "2026-11-24T00:00:00+09:00",
+          "period_end_at": "2026-11-24T18:00:00+09:00",
+          "coverage_complete": true
+        }
+      }
+    },
+    {
+      "author": "author",
+      "team_id": "20000000-0000-4000-8000-000000000100",
+      "record": {
+        "id": "20000000-0000-4000-8000-000000000002",
+        "resident_id": "20000000-0000-4000-8000-000000000200",
+        "observed_at": "2026-11-25T12:15:00+09:00",
+        "fields": {
+          "meal_period": "점심",
+          "meal": "전량",
+          "bowel": "미확인",
+          "walking": "부축 필요",
+          "hygiene": "미실시",
+          "medication": "해당 없음"
+        },
+        "walking_observation": null,
+        "water_measurement": {
+          "basis": "cumulative_cutoff",
+          "ml": 900,
+          "period_start_at": "2026-11-25T00:00:00+09:00",
+          "period_end_at": "2026-11-25T18:00:00+09:00",
+          "coverage_complete": true
+        }
+      }
+    },
+    {
+      "author": "author",
+      "team_id": "20000000-0000-4000-8000-000000000100",
+      "record": {
+        "id": "20000000-0000-4000-8000-000000000003",
+        "resident_id": "20000000-0000-4000-8000-000000000200",
+        "observed_at": "2026-11-26T12:15:00+09:00",
+        "fields": {
+          "meal_period": "점심",
+          "meal": "전량",
+          "bowel": "미확인",
+          "walking": "부축 필요",
+          "hygiene": "미실시",
+          "medication": "해당 없음"
+        },
+        "walking_observation": null,
+        "water_measurement": {
+          "basis": "cumulative_cutoff",
+          "ml": 1000,
+          "period_start_at": "2026-11-26T00:00:00+09:00",
+          "period_end_at": "2026-11-26T18:00:00+09:00",
+          "coverage_complete": true
+        }
+      }
+    },
+    {
+      "author": "author",
+      "team_id": "20000000-0000-4000-8000-000000000100",
+      "record": {
+        "id": "20000000-0000-4000-8000-000000000004",
+        "resident_id": "20000000-0000-4000-8000-000000000200",
+        "observed_at": "2026-11-27T12:15:00+09:00",
+        "fields": {
+          "meal_period": "점심",
+          "meal": "3/4",
+          "bowel": "미확인",
+          "walking": "부축 필요",
+          "hygiene": "미실시",
+          "medication": "해당 없음"
+        },
+        "walking_observation": null,
+        "water_measurement": {
+          "basis": "cumulative_cutoff",
+          "ml": 900,
+          "period_start_at": "2026-11-27T00:00:00+09:00",
+          "period_end_at": "2026-11-27T18:00:00+09:00",
+          "coverage_complete": true
+        }
+      }
+    },
+    {
+      "author": "author",
+      "team_id": "20000000-0000-4000-8000-000000000100",
+      "record": {
+        "id": "20000000-0000-4000-8000-000000000005",
+        "resident_id": "20000000-0000-4000-8000-000000000200",
+        "observed_at": "2026-11-28T12:15:00+09:00",
+        "fields": {
+          "meal_period": "점심",
+          "meal": "3/4",
+          "bowel": "미확인",
+          "walking": "부축 필요",
+          "hygiene": "미실시",
+          "medication": "해당 없음"
+        },
+        "walking_observation": null,
+        "water_measurement": {
+          "basis": "cumulative_cutoff",
+          "ml": 900,
+          "period_start_at": "2026-11-28T00:00:00+09:00",
+          "period_end_at": "2026-11-28T18:00:00+09:00",
+          "coverage_complete": true
+        }
+      }
+    },
+    {
+      "author": "author",
+      "team_id": "20000000-0000-4000-8000-000000000100",
+      "record": {
+        "id": "20000000-0000-4000-8000-000000000006",
+        "resident_id": "20000000-0000-4000-8000-000000000200",
+        "observed_at": "2026-11-29T12:15:00+09:00",
+        "fields": {
+          "meal_period": "점심",
+          "meal": "절반",
+          "bowel": "미확인",
+          "walking": "부축 필요",
+          "hygiene": "미실시",
+          "medication": "해당 없음"
+        },
+        "walking_observation": null,
+        "water_measurement": {
+          "basis": "cumulative_cutoff",
+          "ml": 650,
+          "period_start_at": "2026-11-29T00:00:00+09:00",
+          "period_end_at": "2026-11-29T18:00:00+09:00",
+          "coverage_complete": true
+        }
+      }
+    },
+    {
+      "author": "author",
+      "team_id": "20000000-0000-4000-8000-000000000100",
+      "record": {
+        "id": "20000000-0000-4000-8000-000000000007",
+        "resident_id": "20000000-0000-4000-8000-000000000200",
+        "observed_at": "2026-11-21T15:00:00Z",
+        "fields": {
+          "meal_period": "점심",
+          "meal": "미확인",
+          "bowel": "미확인",
+          "walking": "부축 필요",
+          "hygiene": "미실시",
+          "medication": "해당 없음"
+        },
+        "walking_observation": null,
+        "water_measurement": {
+          "basis": "cumulative_cutoff",
+          "ml": null,
+          "period_start_at": "2026-11-22T00:00:00+09:00",
+          "period_end_at": "2026-11-22T18:00:00+09:00",
+          "coverage_complete": true
+        }
+      }
+    },
+    {
+      "author": "author",
+      "team_id": "20000000-0000-4000-8000-000000000100",
+      "record": {
+        "id": "20000000-0000-4000-8000-000000000008",
+        "resident_id": "20000000-0000-4000-8000-000000000200",
+        "observed_at": "2026-11-23T08:15:00+09:00",
+        "fields": {
+          "meal_period": "아침",
+          "meal": "전량",
+          "bowel": "미확인",
+          "walking": "부축 필요",
+          "hygiene": "미실시",
+          "medication": "해당 없음"
+        },
+        "walking_observation": null,
+        "water_measurement": {
+          "basis": "cumulative_cutoff",
+          "ml": 900,
+          "period_start_at": "2026-11-23T00:00:00+09:00",
+          "period_end_at": "2026-11-23T18:00:00+09:00",
+          "coverage_complete": true
+        }
+      }
+    },
+    {
+      "author": "author",
+      "team_id": "20000000-0000-4000-8000-000000000100",
+      "record": {
+        "id": "20000000-0000-4000-8000-000000000009",
+        "resident_id": "20000000-0000-4000-8000-000000000200",
+        "observed_at": "2026-11-21T12:15:00+09:00",
+        "fields": {
+          "meal_period": "점심",
+          "meal": "전량",
+          "bowel": "미확인",
+          "walking": "부축 필요",
+          "hygiene": "미실시",
+          "medication": "해당 없음"
+        },
+        "walking_observation": null,
+        "water_measurement": {
+          "basis": "cumulative_cutoff",
+          "ml": 900,
+          "period_start_at": "2026-11-21T00:00:00+09:00",
+          "period_end_at": "2026-11-21T18:00:00+09:00",
+          "coverage_complete": true
+        }
+      }
+    },
+    {
+      "author": "author",
+      "team_id": "20000000-0000-4000-8000-000000000100",
+      "record": {
+        "id": "20000000-0000-4000-8000-000000000010",
+        "resident_id": "20000000-0000-4000-8000-000000000201",
+        "observed_at": "2026-11-24T12:15:00+09:00",
+        "fields": {
+          "meal_period": "점심",
+          "meal": "전량",
+          "bowel": "미확인",
+          "walking": "부축 필요",
+          "hygiene": "미실시",
+          "medication": "해당 없음"
+        },
+        "walking_observation": null,
+        "water_measurement": {
+          "basis": "cumulative_cutoff",
+          "ml": 900,
+          "period_start_at": "2026-11-24T00:00:00+09:00",
+          "period_end_at": "2026-11-24T18:00:00+09:00",
+          "coverage_complete": true
+        }
+      }
+    },
+    {
+      "author": "outsider",
+      "team_id": "20000000-0000-4000-8000-000000000101",
+      "record": {
+        "id": "20000000-0000-4000-8000-000000000011",
+        "resident_id": "20000000-0000-4000-8000-000000000202",
+        "observed_at": "2026-11-24T12:15:00+09:00",
+        "fields": {
+          "meal_period": "점심",
+          "meal": "전량",
+          "bowel": "미확인",
+          "walking": "부축 필요",
+          "hygiene": "미실시",
+          "medication": "해당 없음"
+        },
+        "walking_observation": null,
+        "water_measurement": {
+          "basis": "cumulative_cutoff",
+          "ml": 900,
+          "period_start_at": "2026-11-24T00:00:00+09:00",
+          "period_end_at": "2026-11-24T18:00:00+09:00",
+          "coverage_complete": true
+        }
+      }
+    },
+    {
+      "author": "author",
+      "team_id": null,
+      "record": {
+        "id": "20000000-0000-4000-8000-000000000012",
+        "resident_id": "resident-1",
+        "observed_at": "2026-11-24T12:15:00+09:00",
+        "fields": {
+          "meal_period": "점심",
+          "meal": "전량",
+          "bowel": "미확인",
+          "walking": "부축 필요",
+          "hygiene": "미실시",
+          "medication": "해당 없음"
+        },
+        "walking_observation": null,
+        "water_measurement": {
+          "basis": "cumulative_cutoff",
+          "ml": 900,
+          "period_start_at": "2026-11-24T00:00:00+09:00",
+          "period_end_at": "2026-11-24T18:00:00+09:00",
+          "coverage_complete": true
+        }
+      }
+    },
+    {
+      "author": "peer",
+      "team_id": null,
+      "record": {
+        "id": "20000000-0000-4000-8000-000000000013",
+        "resident_id": "resident-1",
+        "observed_at": "2026-11-24T18:15:00+09:00",
+        "fields": {
+          "meal_period": "저녁",
+          "meal": "전량",
+          "bowel": "미확인",
+          "walking": "부축 필요",
+          "hygiene": "미실시",
+          "medication": "해당 없음"
+        },
+        "walking_observation": null,
+        "water_measurement": {
+          "basis": "cumulative_cutoff",
+          "ml": 900,
+          "period_start_at": "2026-11-24T00:00:00+09:00",
+          "period_end_at": "2026-11-24T18:00:00+09:00",
+          "coverage_complete": true
+        }
+      }
+    },
+    {
+      "author": "anonymous",
+      "team_id": null,
+      "record": {
+        "id": "20000000-0000-4000-8000-000000000014",
+        "resident_id": "resident-1",
+        "observed_at": "2026-11-24T12:15:00+09:00",
+        "fields": {
+          "meal_period": "점심",
+          "meal": "전량",
+          "bowel": "미확인",
+          "walking": "부축 필요",
+          "hygiene": "미실시",
+          "medication": "해당 없음"
+        },
+        "walking_observation": null,
+        "water_measurement": {
+          "basis": "cumulative_cutoff",
+          "ml": 900,
+          "period_start_at": "2026-11-24T00:00:00+09:00",
+          "period_end_at": "2026-11-24T18:00:00+09:00",
+          "coverage_complete": true
+        }
+      }
+    },
+    {
+      "author": "peer",
+      "team_id": "20000000-0000-4000-8000-000000000100",
+      "record": {
+        "id": "20000000-0000-4000-8000-000000000015",
+        "resident_id": "20000000-0000-4000-8000-000000000200",
+        "observed_at": "2026-11-25T12:15:00+09:00",
+        "fields": {
+          "meal_period": "점심",
+          "meal": "전량",
+          "bowel": "미확인",
+          "walking": "부축 필요",
+          "hygiene": "미실시",
+          "medication": "해당 없음"
+        },
+        "walking_observation": null,
+        "water_measurement": {
+          "basis": "cumulative_cutoff",
+          "ml": 900,
+          "period_start_at": "2026-11-25T00:00:00+09:00",
+          "period_end_at": "2026-11-25T18:00:00+09:00",
+          "coverage_complete": true
+        }
+      }
+    }
+  ],
+  "current_id": "20000000-0000-4000-8000-000000000006",
+  "cases": [
+    {
+      "name": "감소와 이전 7일 근거",
+      "current_patch": {},
+      "history_ids": [
+        "20000000-0000-4000-8000-000000000001",
+        "20000000-0000-4000-8000-000000000002",
+        "20000000-0000-4000-8000-000000000003",
+        "20000000-0000-4000-8000-000000000004",
+        "20000000-0000-4000-8000-000000000005"
+      ],
+      "expected": {
+        "meal": {
+          "status": "changed",
+          "current_value": 50,
+          "baseline_mean": 90,
+          "delta": -40,
+          "valid_count": 5
+        },
+        "water": {
+          "status": "changed",
+          "current_value": 650,
+          "baseline_mean": 900,
+          "delta": -250,
+          "valid_count": 5
+        }
+      }
+    },
+    {
+      "name": "변화 없음",
+      "current_patch": {
+        "fields": {
+          "meal": "전량"
+        },
+        "water_measurement": {
+          "ml": 900
+        }
+      },
+      "history_ids": [
+        "20000000-0000-4000-8000-000000000001",
+        "20000000-0000-4000-8000-000000000002",
+        "20000000-0000-4000-8000-000000000003"
+      ],
+      "expected": {
+        "meal": {
+          "status": "unchanged",
+          "current_value": 100,
+          "baseline_mean": 100,
+          "delta": 0,
+          "valid_count": 3
+        },
+        "water": {
+          "status": "unchanged",
+          "current_value": 900,
+          "baseline_mean": 900,
+          "delta": 0,
+          "valid_count": 3
+        }
+      }
+    },
+    {
+      "name": "실제 0 보존",
+      "current_patch": {
+        "fields": {
+          "meal": "드시지 않음"
+        },
+        "water_measurement": {
+          "ml": 0
+        }
+      },
+      "history_ids": [
+        "20000000-0000-4000-8000-000000000001",
+        "20000000-0000-4000-8000-000000000002",
+        "20000000-0000-4000-8000-000000000003",
+        "20000000-0000-4000-8000-000000000004",
+        "20000000-0000-4000-8000-000000000005"
+      ],
+      "expected": {
+        "meal": {
+          "status": "changed",
+          "current_value": 0,
+          "baseline_mean": 90,
+          "delta": -90,
+          "valid_count": 5
+        },
+        "water": {
+          "status": "changed",
+          "current_value": 0,
+          "baseline_mean": 900,
+          "delta": -900,
+          "valid_count": 5
+        }
+      }
+    },
+    {
+      "name": "현재 미확인",
+      "current_patch": {
+        "fields": {
+          "meal": "미확인"
+        },
+        "water_measurement": {
+          "ml": null
+        }
+      },
+      "history_ids": [
+        "20000000-0000-4000-8000-000000000001",
+        "20000000-0000-4000-8000-000000000002",
+        "20000000-0000-4000-8000-000000000003",
+        "20000000-0000-4000-8000-000000000004",
+        "20000000-0000-4000-8000-000000000005"
+      ],
+      "expected": {
+        "meal": {
+          "status": "current_unknown",
+          "current_value": null,
+          "baseline_mean": 90,
+          "delta": null,
+          "valid_count": 5
+        },
+        "water": {
+          "status": "current_unknown",
+          "current_value": null,
+          "baseline_mean": 900,
+          "delta": null,
+          "valid_count": 5
+        }
+      }
+    },
+    {
+      "name": "최소 3일 미달",
+      "current_patch": {},
+      "history_ids": [
+        "20000000-0000-4000-8000-000000000001",
+        "20000000-0000-4000-8000-000000000002"
+      ],
+      "expected": {
+        "meal": {
+          "status": "insufficient_data",
+          "current_value": 50,
+          "baseline_mean": null,
+          "delta": null,
+          "valid_count": 2
+        },
+        "water": {
+          "status": "insufficient_data",
+          "current_value": 650,
+          "baseline_mean": null,
+          "delta": null,
+          "valid_count": 2
+        }
+      }
+    },
+    {
+      "name": "끼니 없음",
+      "current_patch": {
+        "fields": {
+          "meal_period": null
+        }
+      },
+      "history_ids": [
+        "20000000-0000-4000-8000-000000000001",
+        "20000000-0000-4000-8000-000000000002",
+        "20000000-0000-4000-8000-000000000003",
+        "20000000-0000-4000-8000-000000000004",
+        "20000000-0000-4000-8000-000000000005"
+      ],
+      "expected": {
+        "meal": {
+          "status": "context_missing",
+          "current_value": 50,
+          "baseline_mean": null,
+          "delta": null,
+          "valid_count": 0
+        },
+        "water": {
+          "status": "changed",
+          "current_value": 650,
+          "baseline_mean": 900,
+          "delta": -250,
+          "valid_count": 5
+        }
+      }
+    },
+    {
+      "name": "관찰 시각 없음",
+      "current_patch": {
+        "observed_at": null
+      },
+      "history_ids": [
+        "20000000-0000-4000-8000-000000000001",
+        "20000000-0000-4000-8000-000000000002",
+        "20000000-0000-4000-8000-000000000003",
+        "20000000-0000-4000-8000-000000000004",
+        "20000000-0000-4000-8000-000000000005"
+      ],
+      "expected": {
+        "meal": {
+          "status": "context_missing",
+          "current_value": 50,
+          "baseline_mean": null,
+          "delta": null,
+          "valid_count": 0
+        },
+        "water": {
+          "status": "changed",
+          "current_value": 650,
+          "baseline_mean": 900,
+          "delta": -250,
+          "valid_count": 5
+        }
+      }
+    },
+    {
+      "name": "범위형 legacy 식사 추정 금지",
+      "current_patch": {
+        "fields": {
+          "meal": "절반 이상"
+        }
+      },
+      "history_ids": [
+        "20000000-0000-4000-8000-000000000001",
+        "20000000-0000-4000-8000-000000000002",
+        "20000000-0000-4000-8000-000000000003",
+        "20000000-0000-4000-8000-000000000004",
+        "20000000-0000-4000-8000-000000000005"
+      ],
+      "expected": {
+        "meal": {
+          "status": "unsupported_legacy",
+          "current_value": null,
+          "baseline_mean": 90,
+          "delta": null,
+          "valid_count": 5
+        },
+        "water": {
+          "status": "changed",
+          "current_value": 650,
+          "baseline_mean": 900,
+          "delta": -250,
+          "valid_count": 5
+        }
+      }
+    },
+    {
+      "name": "단일 수분 사건 합산 금지",
+      "current_patch": {
+        "water_measurement": {
+          "basis": "event"
+        }
+      },
+      "history_ids": [
+        "20000000-0000-4000-8000-000000000001",
+        "20000000-0000-4000-8000-000000000002",
+        "20000000-0000-4000-8000-000000000003",
+        "20000000-0000-4000-8000-000000000004",
+        "20000000-0000-4000-8000-000000000005"
+      ],
+      "expected": {
+        "meal": {
+          "status": "changed",
+          "current_value": 50,
+          "baseline_mean": 90,
+          "delta": -40,
+          "valid_count": 5
+        },
+        "water": {
+          "status": "not_aggregate",
+          "current_value": 650,
+          "baseline_mean": null,
+          "delta": null,
+          "valid_count": 0
+        }
+      }
+    },
+    {
+      "name": "집계 미완료",
+      "current_patch": {
+        "water_measurement": {
+          "coverage_complete": false
+        }
+      },
+      "history_ids": [
+        "20000000-0000-4000-8000-000000000001",
+        "20000000-0000-4000-8000-000000000002",
+        "20000000-0000-4000-8000-000000000003",
+        "20000000-0000-4000-8000-000000000004",
+        "20000000-0000-4000-8000-000000000005"
+      ],
+      "expected": {
+        "meal": {
+          "status": "changed",
+          "current_value": 50,
+          "baseline_mean": 90,
+          "delta": -40,
+          "valid_count": 5
+        },
+        "water": {
+          "status": "incomplete_period",
+          "current_value": 650,
+          "baseline_mean": 900,
+          "delta": null,
+          "valid_count": 5
+        }
+      }
+    },
+    {
+      "name": "집계 종료 이전",
+      "current_patch": {
+        "water_measurement": {
+          "period_end_at": "2026-11-29T19:00:00+09:00"
+        }
+      },
+      "history_ids": [
+        "20000000-0000-4000-8000-000000000001",
+        "20000000-0000-4000-8000-000000000002",
+        "20000000-0000-4000-8000-000000000003",
+        "20000000-0000-4000-8000-000000000004",
+        "20000000-0000-4000-8000-000000000005"
+      ],
+      "expected": {
+        "meal": {
+          "status": "changed",
+          "current_value": 50,
+          "baseline_mean": 90,
+          "delta": -40,
+          "valid_count": 5
+        },
+        "water": {
+          "status": "incomplete_period",
+          "current_value": 650,
+          "baseline_mean": null,
+          "delta": null,
+          "valid_count": 0
+        }
+      }
+    },
+    {
+      "name": "다른 cutoff 제외",
+      "current_patch": {
+        "water_measurement": {
+          "period_end_at": "2026-11-29T17:00:00+09:00"
+        }
+      },
+      "history_ids": [
+        "20000000-0000-4000-8000-000000000001",
+        "20000000-0000-4000-8000-000000000002",
+        "20000000-0000-4000-8000-000000000003",
+        "20000000-0000-4000-8000-000000000004",
+        "20000000-0000-4000-8000-000000000005"
+      ],
+      "expected": {
+        "meal": {
+          "status": "changed",
+          "current_value": 50,
+          "baseline_mean": 90,
+          "delta": -40,
+          "valid_count": 5
+        },
+        "water": {
+          "status": "insufficient_data",
+          "current_value": 650,
+          "baseline_mean": null,
+          "delta": null,
+          "valid_count": 0
+        }
+      }
+    },
+    {
+      "name": "음수 mL 환산 금지",
+      "current_patch": {
+        "water_measurement": {
+          "ml": -1
+        }
+      },
+      "history_ids": [
+        "20000000-0000-4000-8000-000000000001",
+        "20000000-0000-4000-8000-000000000002",
+        "20000000-0000-4000-8000-000000000003",
+        "20000000-0000-4000-8000-000000000004",
+        "20000000-0000-4000-8000-000000000005"
+      ],
+      "expected": {
+        "meal": {
+          "status": "changed",
+          "current_value": 50,
+          "baseline_mean": 90,
+          "delta": -40,
+          "valid_count": 5
+        },
+        "water": {
+          "status": "unsupported_legacy",
+          "current_value": null,
+          "baseline_mean": null,
+          "delta": null,
+          "valid_count": 0
+        }
+      }
+    },
+    {
+      "name": "당일·기간 밖·다른 어르신 제외",
+      "current_patch": {},
+      "history_ids": [
+        "20000000-0000-4000-8000-000000000001",
+        "20000000-0000-4000-8000-000000000002",
+        "20000000-0000-4000-8000-000000000003",
+        "20000000-0000-4000-8000-000000000004",
+        "20000000-0000-4000-8000-000000000005",
+        "20000000-0000-4000-8000-000000000006",
+        "20000000-0000-4000-8000-000000000009",
+        "20000000-0000-4000-8000-000000000010"
+      ],
+      "expected": {
+        "meal": {
+          "status": "changed",
+          "current_value": 50,
+          "baseline_mean": 90,
+          "delta": -40,
+          "valid_count": 5
+        },
+        "water": {
+          "status": "changed",
+          "current_value": 650,
+          "baseline_mean": 900,
+          "delta": -250,
+          "valid_count": 5
+        }
+      }
+    },
+    {
+      "name": "중복 날짜 한 번만 채택",
+      "current_patch": {},
+      "history_ids": [
+        "20000000-0000-4000-8000-000000000001",
+        "20000000-0000-4000-8000-000000000002",
+        "20000000-0000-4000-8000-000000000003",
+        "20000000-0000-4000-8000-000000000004",
+        "20000000-0000-4000-8000-000000000005",
+        "20000000-0000-4000-8000-000000000015"
+      ],
+      "expected": {
+        "meal": {
+          "status": "changed",
+          "current_value": 50,
+          "baseline_mean": 90,
+          "delta": -40,
+          "valid_count": 5,
+          "excluded_counts": {
+            "duplicate": 1
+          }
+        },
+        "water": {
+          "status": "changed",
+          "current_value": 650,
+          "baseline_mean": 900,
+          "delta": -250,
+          "valid_count": 5,
+          "excluded_counts": {
+            "duplicate": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "UTC 자정 경계도 KST 날짜 사용",
+      "current_patch": {
+        "observed_at": "2026-11-28T15:00:00Z"
+      },
+      "history_ids": [
+        "20000000-0000-4000-8000-000000000001",
+        "20000000-0000-4000-8000-000000000002",
+        "20000000-0000-4000-8000-000000000003",
+        "20000000-0000-4000-8000-000000000004",
+        "20000000-0000-4000-8000-000000000005"
+      ],
+      "expected": {
+        "meal": {
+          "status": "changed",
+          "current_value": 50,
+          "baseline_mean": 90,
+          "delta": -40,
+          "valid_count": 5
+        },
+        "water": {
+          "status": "changed",
+          "current_value": 650,
+          "baseline_mean": 900,
+          "delta": -250,
+          "valid_count": 5
+        }
+      }
+    },
+    {
+      "name": "과거 미확인과 다른 끼니 제외",
+      "current_patch": {},
+      "history_ids": [
+        "20000000-0000-4000-8000-000000000001",
+        "20000000-0000-4000-8000-000000000002",
+        "20000000-0000-4000-8000-000000000003",
+        "20000000-0000-4000-8000-000000000004",
+        "20000000-0000-4000-8000-000000000005",
+        "20000000-0000-4000-8000-000000000007",
+        "20000000-0000-4000-8000-000000000008"
+      ],
+      "expected": {
+        "meal": {
+          "status": "changed",
+          "current_value": 50,
+          "baseline_mean": 90,
+          "delta": -40,
+          "valid_count": 5,
+          "excluded_counts": {
+            "unknown_value": 1,
+            "wrong_context": 1
+          }
+        },
+        "water": {
+          "status": "changed",
+          "current_value": 650,
+          "baseline_mean": 900,
+          "delta": -250,
+          "valid_count": 6,
+          "excluded_counts": {
+            "unknown_value": 1
+          }
+        }
+      }
+    }
+  ]
+}
